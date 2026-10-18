@@ -107,6 +107,21 @@ saved to `gateway\.token`.
 | `runTimeoutMs` | Command timeout, default 30 s |
 | `mock` | Serve the local mock chat at `/webcode-mock/` |
 
+## Privacy
+
+* **What leaves your machine:** only what you send to the chat. Tool results (file
+  reads, command output) are inserted into the composer and go to
+  `chat.deepseek.com` when you press Enter.
+* **What stays local:** the token, the gateway, `_fixes/`, backups, logs. There is
+  no telemetry, no analytics, no third-party server.
+* **What the extension reads:** the current chat page and your project files, only
+  when a tool call or drop requires it. It does not read other tabs or browsing
+  history.
+* **Local data:** `_fixes/.meta/manifest.json` (edit history), `_fixes/.meta/backup`
+  and `_fixes/.meta/trash`; `gateway/logs/gateway.jsonl` (tool calls).
+
+Full policy: [PRIVACY.md](PRIVACY.md).
+
 ## Security model
 
 * The token lives in extension storage; the page cannot read it. The gateway listens

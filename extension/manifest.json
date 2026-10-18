@@ -1,35 +1,26 @@
-﻿{
-    "manifest_version":  3,
-    "name":  "WebCode Bridge (prototype)",
-    "version":  "0.2.0",
-    "description":  "РњРѕСЃС‚ РјРµР¶РґСѓ РІРµР±-С‡Р°С‚РѕРј DeepSeek Рё Р»РѕРєР°Р»СЊРЅС‹Рј РїСЂРѕРµРєС‚РѕРј: С‡РёС‚Р°РµС‚ Р±Р»РѕРєРё ```webcode Рё РІС‹РїРѕР»РЅСЏРµС‚ РёС… С‡РµСЂРµР· Р»РѕРєР°Р»СЊРЅС‹Р№ С€Р»СЋР·.",
-    "permissions":  [
-                        "storage"
-                    ],
-    "host_permissions":  [
-                             "http://127.0.0.1/*",
-                             "https://chat.deepseek.com/*"
-                         ],
-    "background":  {
-                       "service_worker":  "background.js"
-                   },
-    "content_scripts":  [
-                            {
-                                "matches":  [
-                                                "https://chat.deepseek.com/*",
-                                                "http://127.0.0.1/*"
-                                            ],
-                                "js":  [
-                                           "content.js"
-                                       ],
-                                "css":  [
-                                            "panel.css"
-                                        ],
-                                "run_at":  "document_idle"
-                            }
-                        ],
-    "action":  {
-                   "default_title":  "WebCode Bridge"
-               },
-    "options_page":  "options.html"
+{
+  "manifest_version": 3,
+  "name": "WebCode Bridge (prototype)",
+  "version": "0.2.0",
+  "description": "Turns the DeepSeek web chat into a local coding agent: sandboxed edits, review-before-apply, backups.",
+  "permissions": ["storage"],
+  "host_permissions": ["http://127.0.0.1/*", "https://chat.deepseek.com/*"],
+  "background": { "service_worker": "background.js" },
+  "content_scripts": [
+    {
+      "matches": ["https://chat.deepseek.com/*"],
+      "js": ["content.js"],
+      "css": ["panel.css"],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": ["http://127.0.0.1/*"],
+      "include_globs": ["*webcode-mock*"],
+      "js": ["content.js"],
+      "css": ["panel.css"],
+      "run_at": "document_idle"
+    }
+  ],
+  "action": { "default_title": "WebCode Bridge" },
+  "options_page": "options.html"
 }
