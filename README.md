@@ -1,4 +1,4 @@
-# pagecode
+# deepseek-bridge
 
 **Chat with DeepSeek. Apply to your repo — safely.**
 
@@ -64,8 +64,8 @@ flowchart LR
 ## Install
 
 ```powershell
-git clone <your-repo-url> pagecode
-cd pagecode
+git clone <your-repo-url> deepseek-bridge
+cd deepseek-bridge
 .\start-gateway.cmd
 ```
 
@@ -159,4 +159,4 @@ tools/e2e.mjs   40 checks + screenshot
 
 ## License
 
-MIT — add a `LICENSE` file before publishing.
+MIT — see [LICENSE](LICENSE).

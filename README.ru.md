@@ -1,4 +1,4 @@
-# WebCode Bridge — мост «браузер → локальный проект»
+# deepseek-bridge — мост «браузер → локальный проект»
 
 > English version: [README.md](README.md)
 

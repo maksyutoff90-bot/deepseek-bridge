@@ -1,6 +1,6 @@
 logs/
 .test-root/
-.test-config.json
+.test-config.json/
 .test-nosandbox/
 .chrome-profile-test/
 .dbg-profile/
@@ -9,3 +9,4 @@ gateway/.token
 node_modules/
 *.crx
 *.pem
+live-*.png
