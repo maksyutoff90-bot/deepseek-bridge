@@ -34,8 +34,13 @@
 1. **Шлюз**: двойной клик по `start-gateway.cmd` (окно оставить открытым).
    Он печатает адрес `http://127.0.0.1:8787` и токен (он же в `gateway\.token`).
 
-2. **Расширение**: `chrome://extensions` → «Режим разработчика» → «Загрузить
-   распакованное» → папка `extension` (или распакуйте zip из [Releases](https://github.com/maksyutoff90-bot/deepseek-bridge/releases)).
+2. **Расширение**: двойной клик по `install.cmd` — он копирует расширение в
+   `%LOCALAPPDATA%\deepseek-bridge\extension` и кладёт этот путь в буфер обмена.
+   Дальше `chrome://extensions` → «Режим разработчика» → «Загрузить распакованное»
+   → вставьте путь (Ctrl+V). Можно и просто выбрать папку `extension` из репозитория
+   (или распаковать zip из [Releases](https://github.com/maksyutoff90-bot/deepseek-bridge/releases)).
+   Аккаунт разработчика Chrome Web Store не нужен; если он появится — Edge Add-ons
+   принимает тот же zip бесплатно.
 
 3. **Настройки расширения** (⚙ в панели): токен, порт `8787`.
 

@@ -1,5 +1,11 @@
 # Chrome Web Store checklist
 
+> **Нет аккаунта разработчика?** Публикация не обязательна. Chrome Web Store берёт
+> разовый \$5 за аккаунт; Edge Add-ons бесплатен и принимает тот же zip. Пока
+> аккаунта нет, распространяйте расширение через GitHub Releases и `install.cmd`
+> (он копирует расширение в `%LOCALAPPDATA%` и кладёт путь в буфер обмена).
+> Всё, что ниже, понадобится в момент, когда решите публиковаться.
+
 ## 1. Before uploading
 
 * [ ] Bump `version` in `extension/manifest.json` (store does not accept a version that

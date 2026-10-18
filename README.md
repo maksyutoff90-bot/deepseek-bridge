@@ -72,15 +72,20 @@ cd deepseek-bridge
 .\start-gateway.cmd
 ```
 
-The gateway prints its address (`http://127.0.0.1:8787`) and token; the token is also
-saved to `gateway\.token`.
+**No store account needed.** Run `install.cmd`: it copies the extension to
+`%LOCALAPPDATA%\deepseek-bridge\extension` and puts that path on your clipboard.
 
 1. Open `chrome://extensions`, enable **Developer mode**, click **Load unpacked**,
-   choose the `extension` folder (or download the release zip and unzip it first).
+   paste the path (`Ctrl+V`) — or choose the `extension` folder from the repo (or
+   download the release zip and unzip it first).
 2. Open the extension options (⚙ in the panel) and paste the token and port `8787`.
 3. Open `https://chat.deepseek.com` and send the contents of
    [`SYSTEM_PROMPT.md`](SYSTEM_PROMPT.md) as the first message.
 4. Ask for a change. Edits appear in `_fixes\`; press **Write** or **Apply** and confirm.
+
+There is no public store listing yet: Chrome Web Store requires a one-time \$5
+developer account, and Edge Add-ons is free and accepts the same zip. Until then the
+unpacked install above is the way.
 
 ## Usage
 
