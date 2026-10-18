@@ -1,5 +1,8 @@
 # deepseek-bridge — мост «браузер → локальный проект»
 
+[![release](https://img.shields.io/github/v/release/maksyutoff90-bot/deepseek-bridge)](https://github.com/maksyutoff90-bot/deepseek-bridge/releases)
+[![license](https://img.shields.io/github/license/maksyutoff90-bot/deepseek-bridge)](LICENSE)
+
 > English version: [README.md](README.md)
 
 Вы общаетесь с `chat.deepseek.com` в обычном Chrome/Edge, а расширение даёт

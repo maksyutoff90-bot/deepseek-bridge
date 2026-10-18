@@ -2,6 +2,9 @@
 
 **Chat with DeepSeek. Apply to your repo — safely.**
 
+[![release](https://img.shields.io/github/v/release/maksyutoff90-bot/deepseek-bridge)](https://github.com/maksyutoff90-bot/deepseek-bridge/releases)
+[![license](https://img.shields.io/github/license/maksyutoff90-bot/deepseek-bridge)](LICENSE)
+
 A Chrome extension plus a tiny local gateway that turns the DeepSeek web chat into
 a coding agent for your machine: read and search files, propose edits, review them,
 and only then write to the project — with backups. No API key, no cloud, no silent
