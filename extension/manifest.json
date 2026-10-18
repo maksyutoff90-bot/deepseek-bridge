@@ -3,6 +3,7 @@
   "name": "WebCode Bridge (prototype)",
   "version": "0.2.0",
   "description": "Turns the DeepSeek web chat into a local coding agent: sandboxed edits, review-before-apply, backups.",
+  "icons": { "16": "icon16.png", "48": "icon48.png", "128": "icon128.png" },
   "permissions": ["storage"],
   "host_permissions": ["http://127.0.0.1/*", "https://chat.deepseek.com/*"],
   "background": { "service_worker": "background.js" },
@@ -21,6 +22,9 @@
       "run_at": "document_idle"
     }
   ],
-  "action": { "default_title": "WebCode Bridge" },
+  "action": {
+    "default_title": "WebCode Bridge",
+    "default_icon": { "16": "icon16.png", "48": "icon48.png", "128": "icon128.png" }
+  },
   "options_page": "options.html"
 }
