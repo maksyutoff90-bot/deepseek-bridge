@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <title>Mock chat — проверка моста</title>
+    <style>
+      :root { color-scheme: dark; }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font: 14px/1.6 system-ui, -apple-system, "Segoe UI", sans-serif;
+        background: #1b1c20;
+        color: #e8eaef;
+      }
+      header {
+        padding: 10px 16px;
+        border-bottom: 1px solid #2c2e35;
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        position: sticky;
+        top: 0;
+        background: #1b1c20cc;
+        backdrop-filter: blur(6px);
+        z-index: 5;
+      }
+      header b { font-size: 13px; color: #9aa2ae; }
+      header button { font-size: 12px; }
+      main { max-width: 820px; margin: 0 auto; padding: 18px 16px 190px; }
+      .msg { margin: 0 0 18px; display: flex; gap: 10px; }
+      .msg.user { justify-content: flex-end; }
+      .bubble {
+        max-width: 88%;
+        padding: 10px 14px;
+        border-radius: 12px;
+        background: #24262d;
+        border: 1px solid #2f323a;
+      }
+      .msg.user .bubble { background: #2c3a5e; border-color: #35477a; }
+      .ds-markdown { white-space: normal; }
+      .ds-markdown-paragraph { margin: 6px 0; }
+
+      .md-code-block {
+        margin: 10px 0;
+        border: 1px solid #343842;
+        border-radius: 8px;
+        overflow: hidden;
+        background: #15161a;
+      }
+      .md-code-block-banner-wrap {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 5px 10px;
+        background: #1d1f25;
+        border-bottom: 1px solid #2c2f37;
+      }
+      .md-code-block-banner { font: 11px ui-monospace, Consolas, monospace; color: #9aa2ae; letter-spacing: 0.4px; }
+      .md-code-block-copy { margin-left: auto; font-size: 11px; color: #7f8794; }
+      .md-code-block pre { margin: 0; padding: 10px 12px; overflow: auto; }
+      .md-code-block code { font: 12px/1.5 ui-monospace, Consolas, monospace; color: #d6d9e0; white-space: pre; }
+
+      footer {
+        position: fixed;
+        inset: auto 0 0 0;
+        padding: 12px 16px 16px;
+        background: linear-gradient(#1b1c2000, #1b1c20 30%);
+      }
+      .composer {
+        max-width: 820px;
+        margin: 0 auto;
+        display: flex;
+        gap: 10px;
+        align-items: flex-end;
+        background: #24262d;
+        border: 1px solid #343842;
+        border-radius: 12px;
+        padding: 8px 10px;
+      }
+      .composer textarea {
+        flex: 1;
+        resize: none;
+        border: 0;
+        outline: 0;
+        background: transparent;
+        color: #e8eaef;
+        font: 14px/1.5 inherit;
+        min-height: 44px;
+        max-height: 160px;
+      }
+      .composer button {
+        border: 0;
+        border-radius: 8px;
+        padding: 8px 14px;
+        background: #2f6fed;
+        color: #fff;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      .hint { max-width: 820px; margin: 8px auto 0; font-size: 11px; color: #7f8794; }
+    </style>
+  </head>
+  <body>
+    <header>
+      <b>MOCK · chat.deepseek.com</b>
+      <button id="sim-read">Смоделировать read</button>
+      <button id="sim-write">Смоделировать write</button>
+      <button id="sim-escape">Смоделировать выход за root</button>
+      <button id="sim-run">Смоделировать run</button>
+    </header>
+
+    <main id="chat">
+      <div class="msg user"><div class="bubble">Прочитай hello.txt и скажи, что там.</div></div>
+      <div class="msg assistant">
+        <div class="bubble">
+          <div class="ds-markdown ds-assistant-message-main-content">
+            <p class="ds-markdown-paragraph">Сейчас посмотрю файл.</p>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <footer>
+      <div class="composer">
+        <textarea id="composer" rows="2" placeholder="Сообщение для DeepSeek" name="search"></textarea>
+        <button id="send">Отправить</button>
+      </div>
+      <div class="hint">Это локальная заглушка для проверки моста. Enter — отправить, Shift+Enter — перенос строки.</div>
+    </footer>
+
+    <script>
+      const chat = document.getElementById("chat");
+      const composer = document.getElementById("composer");
+
+      function addMessage(html, who = "assistant") {
+        const wrap = document.createElement("div");
+        wrap.className = "msg " + who;
+        wrap.innerHTML = `<div class="bubble"><div class="ds-markdown ds-assistant-message-main-content">${html}</div></div>`;
+        chat.appendChild(wrap);
+        wrap.scrollIntoView({ block: "end" });
+        return wrap.querySelector(".ds-markdown");
+      }
+
+      function codeBlock(label) {
+        const block = document.createElement("div");
+        block.className = "md-code-block";
+        block.innerHTML = `
+          <div class="md-code-block-banner-wrap">
+            <div class="md-code-block-banner">${label}</div>
+            <div class="md-code-block-copy">Copy</div>
+          </div>
+          <pre><code class="language-${label}"></code></pre>`;
+        return block;
+      }
+
+      const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+      function addCodeMessage(file, content, lang = "python") {
+        const md = addMessage(`<p class="ds-markdown-paragraph"><strong>${file}</strong></p>`);
+        const block = codeBlock(lang);
+        block.querySelector("code").textContent = content;
+        md.appendChild(block);
+        return md;
+      }
+
+      // Имитация «истории»: DeepSeek дорисовывает старые сообщения уже после
+      // загрузки страницы. Такие блоки не должны ни выполняться, ни сохраняться.
+      const historyDelay = Number(new URLSearchParams(location.search).get("history") || 0);
+      if (historyDelay > 0) {
+        setTimeout(() => {
+          addCodeMessage("history_a.py", "def old_a():\n    return 'history A'\n");
+          addCodeMessage("history_b.py", "def old_b():\n    return 'history B'\n");
+          const md = addMessage('<p class="ds-markdown-paragraph">Старый вызов</p>');
+          const block = codeBlock("webcode");
+          block.querySelector("code").textContent = JSON.stringify([
+            { tool: "write", args: { path: "history_write.txt", content: "из истории" } },
+          ]);
+          md.appendChild(block);
+        }, historyDelay);
+      }
+
+      // Главный вход для теста и кнопок: имитирует ответ модели с блоком ```webcode.
+      window.__wcMock = {
+        addCode: addCodeMessage,
+        // Код без указания файла — для проверки ручной записи.
+        async plainCode(content, lang = "python") {
+          const md = addMessage('<p class="ds-markdown-paragraph">Вот код:</p>');
+          const block = codeBlock(lang);
+          block.querySelector("code").textContent = content;
+          md.appendChild(block);
+          return content;
+        },
+        async simulate(calls, { stream = true, text = "Выполняю." } = {}) {
+          const md = addMessage(`<p class="ds-markdown-paragraph">${text}</p>`);
+          const block = codeBlock("webcode");
+          md.appendChild(block);
+          const code = block.querySelector("code");
+          const payload = JSON.stringify(Array.isArray(calls) ? calls : [calls], null, 2);
+          if (!stream) {
+            code.textContent = payload;
+            return payload;
+          }
+          const step = Math.max(12, Math.ceil(payload.length / 40));
+          for (let i = 0; i < payload.length; i += step) {
+            code.textContent = payload.slice(0, i + step);
+            await sleep(12);
+          }
+          code.textContent = payload;
+          return payload;
+        },
+        composerValue: () => composer.value,
+        messages: () => chat.innerText,
+      };
+
+      // Обычный ответ с кодом (без JSON-команд): путь указан заголовком.
+      window.__wcMock.code = async (file, content, lang = "python") => {
+        const md = addMessage(`<p class="ds-markdown-paragraph"><strong>${file}</strong></p>`);
+        await sleep(60);
+        const block = codeBlock(lang);
+        const code = block.querySelector("code");
+        md.appendChild(block);
+        for (let i = 0; i < content.length; i += 16) {
+          code.textContent = content.slice(0, i + 16);
+          await sleep(8);
+        }
+        code.textContent = content;
+        return content;
+      };
+
+      function send() {
+        const text = composer.value.trim();
+        if (!text) return;
+        addMessage(text.replace(/</g, "&lt;"), "user");
+        composer.value = "";
+        composer.dispatchEvent(new Event("input", { bubbles: true }));
+      }
+
+      document.getElementById("send").addEventListener("click", send);
+      composer.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" && !e.shiftKey) {
+          e.preventDefault();
+          send();
+        }
+      });
+
+      document.getElementById("sim-read").addEventListener("click", () =>
+        window.__wcMock.simulate({ tool: "read", args: { path: "hello.txt" } })
+      );
+      document.getElementById("sim-write").addEventListener("click", () =>
+        window.__wcMock.simulate({ tool: "write", args: { path: "src/from-model.txt", content: "написано DeepSeek через мост" } })
+      );
+      document.getElementById("sim-escape").addEventListener("click", () =>
+        window.__wcMock.simulate({ tool: "read", args: { path: "..\\secret.txt" } })
+      );
+      document.getElementById("sim-run").addEventListener("click", () =>
+        window.__wcMock.simulate({ tool: "run", args: { command: "echo bridge-ok" } })
+      );
+    </script>
+  </body>
+</html>

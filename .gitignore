@@ -1,0 +1,11 @@
+logs/
+.test-root/
+.test-config.json
+.test-nosandbox/
+.chrome-profile-test/
+.dbg-profile/
+outside-secret.txt
+gateway/.token
+node_modules/
+*.crx
+*.pem

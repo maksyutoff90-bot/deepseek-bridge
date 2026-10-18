@@ -1,0 +1,11 @@
+{
+  "root": "E:\\EnglishRus",
+  "port": 8787,
+  "token": "",
+  "sandbox": true,
+  "sandboxDir": "_fixes",
+  "allowWrite": true,
+  "allowRun": true,
+  "runTimeoutMs": 30000,
+  "mock": true
+}

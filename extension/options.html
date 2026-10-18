@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <title>WebCode Bridge — настройки</title>
+    <style>
+      body {
+        font: 14px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
+        background: #14151a;
+        color: #e7e9ee;
+        margin: 0;
+        padding: 28px;
+      }
+      main { max-width: 520px; margin: 0 auto; }
+      h1 { font-size: 18px; margin: 0 0 4px; }
+      p.sub { color: #8f96a3; margin: 0 0 22px; font-size: 13px; }
+      label { display: block; margin: 14px 0 4px; font-size: 12px; color: #aeb5c0; }
+      input[type="text"], input[type="number"] {
+        width: 100%; padding: 8px 10px; border-radius: 7px;
+        border: 1px solid #33363f; background: #1c1e25; color: #e7e9ee;
+        font: 13px ui-monospace, Consolas, monospace;
+      }
+      .row { display: flex; gap: 10px; }
+      .row > div { flex: 1; }
+      .check { display: flex; align-items: center; gap: 8px; margin-top: 16px; font-size: 13px; color: #cfd4dc; }
+      button {
+        margin-top: 20px; padding: 9px 16px; border: 0; border-radius: 7px;
+        background: #2f6fed; color: #fff; font-weight: 600; cursor: pointer;
+      }
+      button.ghost { background: #24262d; color: #c3c8d1; margin-left: 8px; }
+      #status { margin-top: 16px; font-size: 13px; min-height: 20px; }
+      .ok { color: #4ecb84; }
+      .err { color: #ef7676; }
+      code { background: #23252c; padding: 1px 4px; border-radius: 4px; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>WebCode Bridge</h1>
+      <p class="sub">Прототип моста: веб-чат DeepSeek → локальный шлюз → файлы проекта.</p>
+
+      <div class="row">
+        <div>
+          <label for="port">Порт шлюза</label>
+          <input id="port" type="number" min="1" max="65535" />
+        </div>
+        <div>
+          <label for="token">Токен</label>
+          <input id="token" type="text" spellcheck="false" autocomplete="off" />
+        </div>
+      </div>
+
+      <label class="check">
+        <input id="autoSend" type="checkbox" />
+        Отправлять результат в чат автоматически
+      </label>
+
+      <label class="check">
+        <input id="capture" type="checkbox" />
+        Сохранять код из обычных ответов в папку исправлений
+      </label>
+
+      <label class="check">
+        <input id="collapse" type="checkbox" />
+        Не разворачивать панель при новом результате
+      </label>
+
+      <div>
+        <button id="save">Сохранить</button>
+        <button id="test" class="ghost">Проверить связь</button>
+      </div>
+
+      <div id="status"></div>
+
+      <p class="sub" style="margin-top: 26px">
+        Токен печатает шлюз при запуске и сохраняет в
+        <code>gateway/.token</code>.
+      </p>
+    </main>
+    <script src="options.js"></script>
+  </body>
+</html>
