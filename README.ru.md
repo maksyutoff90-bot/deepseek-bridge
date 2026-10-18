@@ -35,7 +35,7 @@
    Он печатает адрес `http://127.0.0.1:8787` и токен (он же в `gateway\.token`).
 
 2. **Расширение**: `chrome://extensions` → «Режим разработчика» → «Загрузить
-   распакованное» → папка `extension`.
+   распакованное» → папка `extension` (или распакуйте zip из [Releases](https://github.com/maksyutoff90-bot/deepseek-bridge/releases)).
 
 3. **Настройки расширения** (⚙ в панели): токен, порт `8787`.
 

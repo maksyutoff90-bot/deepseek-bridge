@@ -76,7 +76,7 @@ The gateway prints its address (`http://127.0.0.1:8787`) and token; the token is
 saved to `gateway\.token`.
 
 1. Open `chrome://extensions`, enable **Developer mode**, click **Load unpacked**,
-   choose the `extension` folder.
+   choose the `extension` folder (or download the release zip and unzip it first).
 2. Open the extension options (⚙ in the panel) and paste the token and port `8787`.
 3. Open `https://chat.deepseek.com` and send the contents of
    [`SYSTEM_PROMPT.md`](SYSTEM_PROMPT.md) as the first message.
