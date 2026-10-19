@@ -75,6 +75,7 @@
       </div>
     </div>`;
   (document.body || document.documentElement).appendChild(host);
+  window.__wcI18n.setLang("en", host);
 
   const $ = (id) => host.querySelector("#" + id);
   const panel = $("wc-panel");
@@ -142,7 +143,7 @@
     const line = document.createElement("div");
     line.className = "wc-line wc-" + kind;
     const t = new Date().toLocaleTimeString();
-    line.textContent = `${t}  ${text}`;
+    line.textContent = `${t}  ${window.__wcI18n.tr(text)}`;
     logEl.appendChild(line);
     while (logEl.childElementCount > 80) logEl.firstElementChild.remove();
     logEl.scrollTop = logEl.scrollHeight;
@@ -232,7 +233,7 @@
   // ------------------------------------------------------------ конфиг ----
   // Читаем каждый раз: смена порта/токена не требует перезагрузки вкладки.
   async function getCfg() {
-    const def = { port: 8787, token: "", autoSend: false, capture: true, noAutoExpand: false };
+    const def = { port: 8787, token: "", autoSend: false, capture: true, noAutoExpand: false, lang: "en" };
     try {
       const r = await chrome.runtime.sendMessage({ type: "config" });
       return { ...def, ...(r || {}) };
@@ -1259,7 +1260,11 @@
     const draft = ta.value.trim();
     const text =
       draft && !draft.includes("[webcode:result]") ? `${ta.value.replace(/\s+$/, "")}\n\n${chunk}` : chunk;
-    fillComposer(text);
+    const out =
+      window.__wcI18n.lang === "en"
+        ? text.split("\n").map((line) => window.__wcI18n.tr(line)).join("\n")
+        : text;
+    fillComposer(out);
     state.pending = "";
     updateSend();
     log(`вставлено в поле ввода (${text.length} символов)`, "ok");
@@ -1387,6 +1392,7 @@
 
   let timer = 0;
   const observer = new MutationObserver((muts) => {
+    if (muts.some((m) => host.contains(m.target))) window.__wcI18n.apply(host);
     if (muts.every((m) => host.contains(m.target))) return; // наши же строки лога
     clearTimeout(timer);
     timer = setTimeout(scan, 350);
@@ -1418,6 +1424,7 @@
     ping();
     setInterval(ping, 20000);
     log(`WebCode Bridge ${VERSION}: правки сохраняются в _fixes`, "dim");
+    getCfg().then((cfg) => window.__wcI18n.setLang(cfg.lang || "en", host));
     armSettle();
     // Переключение чатов в сайдбаре — SPA-навигация без перезагрузки.
     let lastUrl = location.href;

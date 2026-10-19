@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
   <head>
     <meta charset="utf-8" />
-    <title>WebCode Bridge — настройки</title>
+    <title>WebCode Bridge — settings</title>
     <style>
       body {
         font: 14px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
@@ -15,7 +15,7 @@
       h1 { font-size: 18px; margin: 0 0 4px; }
       p.sub { color: #8f96a3; margin: 0 0 22px; font-size: 13px; }
       label { display: block; margin: 14px 0 4px; font-size: 12px; color: #aeb5c0; }
-      input[type="text"], input[type="number"] {
+      input[type="text"], input[type="number"], select {
         width: 100%; padding: 8px 10px; border-radius: 7px;
         border: 1px solid #33363f; background: #1c1e25; color: #e7e9ee;
         font: 13px ui-monospace, Consolas, monospace;
@@ -37,44 +37,50 @@
   <body>
     <main>
       <h1>WebCode Bridge</h1>
-      <p class="sub">Прототип моста: веб-чат DeepSeek → локальный шлюз → файлы проекта.</p>
+      <p class="sub">Bridge between the DeepSeek web chat and your local project.</p>
 
       <div class="row">
         <div>
-          <label for="port">Порт шлюза</label>
+          <label for="port">Gateway port</label>
           <input id="port" type="number" min="1" max="65535" />
         </div>
         <div>
-          <label for="token">Токен</label>
+          <label for="token">Token</label>
           <input id="token" type="text" spellcheck="false" autocomplete="off" />
         </div>
       </div>
 
+      <label for="lang">Panel language</label>
+      <select id="lang">
+        <option value="en">English</option>
+        <option value="ru">Русский</option>
+      </select>
+
       <label class="check">
         <input id="autoSend" type="checkbox" />
-        Отправлять результат в чат автоматически
+        Send results to the chat automatically
       </label>
 
       <label class="check">
         <input id="capture" type="checkbox" />
-        Сохранять код из обычных ответов в папку исправлений
+        Capture code from plain answers into the fixes folder
       </label>
 
       <label class="check">
         <input id="collapse" type="checkbox" />
-        Не разворачивать панель при новом результате
+        Keep the panel collapsed on new results
       </label>
 
       <div>
-        <button id="save">Сохранить</button>
-        <button id="test" class="ghost">Проверить связь</button>
+        <button id="save">Save</button>
+        <button id="test" class="ghost">Test connection</button>
       </div>
 
       <div id="status"></div>
 
       <p class="sub" style="margin-top: 26px">
-        Токен печатает шлюз при запуске и сохраняет в
-        <code>gateway/.token</code>.
+        The token is printed by the gateway on start and saved to
+        <code>gateway/.token</code>. After changing the language, reload the chat tab.
       </p>
     </main>
     <script src="options.js"></script>

@@ -10,14 +10,14 @@
   "content_scripts": [
     {
       "matches": ["https://chat.deepseek.com/*"],
-      "js": ["content.js"],
+      "js": ["i18n.js", "content.js"],
       "css": ["panel.css"],
       "run_at": "document_idle"
     },
     {
       "matches": ["http://127.0.0.1/*"],
       "include_globs": ["*webcode-mock*"],
-      "js": ["content.js"],
+      "js": ["i18n.js", "content.js"],
       "css": ["panel.css"],
       "run_at": "document_idle"
     }

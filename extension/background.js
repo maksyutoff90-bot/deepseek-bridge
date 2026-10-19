@@ -1,6 +1,6 @@
 // Service worker: единственное место, где расширение ходит в сеть.
 // Так запросы к 127.0.0.1 не зависят от CSP страницы chat.deepseek.com.
-const DEFAULTS = { port: 8787, token: "", autoSend: false, capture: true, noAutoExpand: false };
+const DEFAULTS = { port: 8787, token: "", autoSend: false, capture: true, noAutoExpand: false, lang: "en" };
 
 chrome.runtime.onInstalled.addListener(async () => {
   const cur = await chrome.storage.local.get(Object.keys(DEFAULTS));

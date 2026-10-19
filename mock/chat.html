@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
   <head>
     <meta charset="utf-8" />
-    <title>Mock chat — проверка моста</title>
+    <title>Mock chat — bridge test</title>
     <style>
       :root { color-scheme: dark; }
       * { box-sizing: border-box; }
@@ -103,18 +103,18 @@
   <body>
     <header>
       <b>MOCK · chat.deepseek.com</b>
-      <button id="sim-read">Смоделировать read</button>
-      <button id="sim-write">Смоделировать write</button>
-      <button id="sim-escape">Смоделировать выход за root</button>
-      <button id="sim-run">Смоделировать run</button>
+      <button id="sim-read">Simulate read</button>
+      <button id="sim-write">Simulate write</button>
+      <button id="sim-escape">Simulate escape</button>
+      <button id="sim-run">Simulate run</button>
     </header>
 
     <main id="chat">
-      <div class="msg user"><div class="bubble">Прочитай hello.txt и скажи, что там.</div></div>
+      <div class="msg user"><div class="bubble">Read hello.txt and tell me what is there.</div></div>
       <div class="msg assistant">
         <div class="bubble">
           <div class="ds-markdown ds-assistant-message-main-content">
-            <p class="ds-markdown-paragraph">Сейчас посмотрю файл.</p>
+            <p class="ds-markdown-paragraph">Let me look at the file.</p>
           </div>
         </div>
       </div>
@@ -122,10 +122,10 @@
 
     <footer>
       <div class="composer">
-        <textarea id="composer" rows="2" placeholder="Сообщение для DeepSeek" name="search"></textarea>
-        <button id="send">Отправить</button>
+        <textarea id="composer" rows="2" placeholder="Message DeepSeek" name="search"></textarea>
+        <button id="send">Send</button>
       </div>
-      <div class="hint">Это локальная заглушка для проверки моста. Enter — отправить, Shift+Enter — перенос строки.</div>
+      <div class="hint">Local mock page for testing the bridge. Enter — send, Shift+Enter — new line.</div>
     </footer>
 
     <script>
@@ -170,7 +170,7 @@
         setTimeout(() => {
           addCodeMessage("history_a.py", "def old_a():\n    return 'history A'\n");
           addCodeMessage("history_b.py", "def old_b():\n    return 'history B'\n");
-          const md = addMessage('<p class="ds-markdown-paragraph">Старый вызов</p>');
+          const md = addMessage('<p class="ds-markdown-paragraph">Old call</p>');
           const block = codeBlock("webcode");
           block.querySelector("code").textContent = JSON.stringify([
             { tool: "write", args: { path: "history_write.txt", content: "из истории" } },
@@ -184,13 +184,13 @@
         addCode: addCodeMessage,
         // Код без указания файла — для проверки ручной записи.
         async plainCode(content, lang = "python") {
-          const md = addMessage('<p class="ds-markdown-paragraph">Вот код:</p>');
+          const md = addMessage('<p class="ds-markdown-paragraph">Here is the code:</p>');
           const block = codeBlock(lang);
           block.querySelector("code").textContent = content;
           md.appendChild(block);
           return content;
         },
-        async simulate(calls, { stream = true, text = "Выполняю." } = {}) {
+        async simulate(calls, { stream = true, text = "Working…" } = {}) {
           const md = addMessage(`<p class="ds-markdown-paragraph">${text}</p>`);
           const block = codeBlock("webcode");
           md.appendChild(block);
@@ -247,7 +247,7 @@
         window.__wcMock.simulate({ tool: "read", args: { path: "hello.txt" } })
       );
       document.getElementById("sim-write").addEventListener("click", () =>
-        window.__wcMock.simulate({ tool: "write", args: { path: "src/from-model.txt", content: "написано DeepSeek через мост" } })
+        window.__wcMock.simulate({ tool: "write", args: { path: "src/from-model.txt", content: "written by DeepSeek through the bridge" } })
       );
       document.getElementById("sim-escape").addEventListener("click", () =>
         window.__wcMock.simulate({ tool: "read", args: { path: "..\\secret.txt" } })

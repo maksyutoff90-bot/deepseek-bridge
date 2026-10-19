@@ -289,7 +289,7 @@ const SHIM = (autoSend) => `(() => {
   const PORT = ${PORT};
   const TOKEN = ${JSON.stringify(TOKEN)};
   const base = "http://127.0.0.1:" + PORT;
-  const cfg = { port: PORT, token: TOKEN, autoSend: ${autoSend ? "true" : "false"} };
+  const cfg = { port: PORT, token: TOKEN, autoSend: ${autoSend ? "true" : "false"}, lang: "en" };
   window.chrome = window.chrome || {};
   window.chrome.runtime = {
     id: "wc-e2e",
@@ -322,7 +322,7 @@ async function injectAll(page, { autoSend }) {
   await waitFor(page, `!!document.querySelector("#wc-host")`, 5000, "панель WebCode");
 }
 
-async function simulate(page, call, opts = { stream: true, text: "Выполняю." }) {
+async function simulate(page, call, opts = { stream: true, text: "Working…" }) {
   await page.eval(`window.__wcMock.simulate(${JSON.stringify(call)}, ${JSON.stringify(opts)})`);
 }
 
@@ -639,6 +639,12 @@ async function main() {
     }
     assert(content === "написано DeepSeek через мост", "нет файла в _fixes: " + JSON.stringify(content));
     assert(!fs.existsSync(path.join(TEST_ROOT, "src", "from-model.txt")), "исходник создан напрямую!");
+    await waitFor(
+      page,
+      `((document.querySelector("#composer")||{}).value||"").includes("staged: _fixes/src/from-model.txt")`,
+      15000,
+      "результат write в поле ввода"
+    );
     const val = await composerValue(page);
     assert(val.includes("staged: _fixes/src/from-model.txt"), "в результате нет пометки о песочнице: " + val.slice(0, 240));
     return "staged";
@@ -689,7 +695,7 @@ async function main() {
     await page.eval(`document.querySelector("#wc-write").click()`);
     await waitFor(page, `!document.querySelector("#wc-assign").hidden`, 5000, "форма записи");
     const title = await page.eval(`document.querySelector("#wc-assign .wc-confirm-title").textContent`);
-    assert(/Укажите файл/.test(title), "ожидалась форма выбора файла: " + title);
+    assert(/Pick a file/.test(title), "ожидалась форма выбора файла: " + title);
     await page.eval(`(() => {
       const i = document.querySelector("#wc-assign input");
       i.value = "src/manual_write.py";
@@ -788,11 +794,11 @@ async function main() {
     await waitFor(page, `!!document.querySelector("#wc-menu")`, 5000, "контекстное меню");
     const items = await page.eval(`[...document.querySelectorAll(".wc-menu-item")].map((i) => i.textContent)`);
     assert(
-      items.includes("Открыть в VS Code") && items.includes("Прочитать") && items.includes("Удалить (в корзину)"),
+      items.includes("Open in VS Code") && items.includes("Preview") && items.includes("Delete (to trash)"),
       "неполное меню: " + items.join(", ")
     );
     await page.eval(`(() => {
-      [...document.querySelectorAll(".wc-menu-item")].find((i) => i.textContent === "Прочитать").click();
+      [...document.querySelectorAll(".wc-menu-item")].find((i) => i.textContent === "Preview").click();
       return true;
     })()`);
     await waitFor(page, `!document.querySelector("#wc-preview").hidden`, 8000, "предпросмотр");
@@ -842,7 +848,7 @@ async function main() {
     await sleep(600);
     assert(fs.existsSync(dir), "папка _fixes не создана");
     const log = await page.eval(`document.querySelector("#wc-log").innerText`);
-    assert(/открыл _fixes/.test(log), "в логе нет подтверждения: " + log.slice(-200));
+    assert(/opened _fixes/.test(log), "в логе нет подтверждения: " + log.slice(-200));
     return "ok";
   });
 
