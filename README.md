@@ -35,7 +35,7 @@ file changes.
 | Context menu | Right-click a file: open in VS Code, diff with the pending edit, preview, copy path, delete to trash |
 | Diff | `code --diff _fixes/... original` opens in VS Code |
 | Panel | Floating or docked to the right, resizable by dragging the left edge |
-| Languages | English by default, Russian available in the settings (reload the chat tab after switching) |
+| Languages | English by default, Russian in the settings; switches live, no reload |
 | Safety | Sandbox staging, apply confirmation, backups, “looks like a fragment” guard, token auth |
 | Robustness | Ignores chat history (including history rendered late in a background tab) and SPA chat switches |
 

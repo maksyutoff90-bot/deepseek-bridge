@@ -317,6 +317,8 @@ async function injectAll(page, { autoSend }) {
   await page.eval(
     `(() => { const s = document.createElement("style"); s.textContent = ${JSON.stringify(css)}; document.head.appendChild(s); return true; })()`
   );
+  const i18n = await fsp.readFile(path.join(EXT, "i18n.js"), "utf8");
+  await page.eval(`${i18n}\n//# sourceURL=webcode-i18n.js`);
   const js = await fsp.readFile(path.join(EXT, "content.js"), "utf8");
   await page.eval(`${js}\n//# sourceURL=webcode-content.js`);
   await waitFor(page, `!!document.querySelector("#wc-host")`, 5000, "панель WebCode");

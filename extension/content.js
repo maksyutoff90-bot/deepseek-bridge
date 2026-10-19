@@ -8,6 +8,13 @@
   "use strict";
   if (window.__webcodeBridgeLoaded) return;
   window.__webcodeBridgeLoaded = true;
+  // Запасной вариант, если i18n.js не загрузился (например, при ручной инъекции).
+  window.__wcI18n = window.__wcI18n || {
+    tr: (s) => s,
+    apply: () => {},
+    setLang: () => {},
+    lang: "en",
+  };
 
   const VERSION = "0.2.0";
   const STABLE_MS = 1200;      // блок должен не меняться столько времени (стриминг)
@@ -143,7 +150,11 @@
     const line = document.createElement("div");
     line.className = "wc-line wc-" + kind;
     const t = new Date().toLocaleTimeString();
-    line.textContent = `${t}  ${window.__wcI18n.tr(text)}`;
+    const timeEl = document.createElement("span");
+    timeEl.textContent = `${t}  `;
+    const msgEl = document.createElement("span");
+    msgEl.textContent = text; // перевод делает apply(), чтобы работало переключение
+    line.append(timeEl, msgEl);
     logEl.appendChild(line);
     while (logEl.childElementCount > 80) logEl.firstElementChild.remove();
     logEl.scrollTop = logEl.scrollHeight;
@@ -1424,6 +1435,14 @@
     ping();
     setInterval(ping, 20000);
     log(`WebCode Bridge ${VERSION}: правки сохраняются в _fixes`, "dim");
+    // Смена языка в настройках применяется без перезагрузки вкладки.
+    try {
+      chrome.storage.onChanged.addListener((changes, area) => {
+        if (area === "local" && changes.lang) {
+          window.__wcI18n.setLang(changes.lang.newValue === "ru" ? "ru" : "en", host);
+        }
+      });
+    } catch {}
     getCfg().then((cfg) => window.__wcI18n.setLang(cfg.lang || "en", host));
     armSettle();
     // Переключение чатов в сайдбаре — SPA-навигация без перезагрузки.
