@@ -547,6 +547,18 @@ async function main() {
     return "direct ok";
   });
 
+  await check("plugins: пользовательские действия", async () => {
+    await fsp.writeFile(
+      path.join(TEST_ROOT, "plugins.json"),
+      JSON.stringify([{ name: "List root", tool: "list", args: { path: "." } }]),
+      "utf8"
+    );
+    const { body } = await api("plugins", {});
+    assert(body.ok && body.items.length === 1, JSON.stringify(body));
+    assert(body.items[0].name === "List root" && body.items[0].tool === "list", JSON.stringify(body.items[0]));
+    return "1 plugin";
+  });
+
   await check("unit: sandbox=false пишет напрямую", async () => {
     const { createTools } = await import(pathToFileURL(path.join(BASE, "gateway", "tools.mjs")).href);
     const dir = path.join(BASE, ".test-nosandbox");

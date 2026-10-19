@@ -499,6 +499,32 @@ export function createTools(rootDir, config = {}) {
     return { removed: rel, trashed: trashRel };
   };
 
+  // Пользовательские действия из plugins.json в корне проекта.
+  const plugins = async () => {
+    const file = path.join(root, "plugins.json");
+    let raw;
+    try {
+      raw = await fsp.readFile(file, "utf8");
+    } catch {
+      return { items: [], file: "plugins.json" };
+    }
+    let data;
+    try {
+      data = JSON.parse(raw);
+    } catch (e) {
+      throw new ToolError(`plugins.json: некорректный JSON (${e.message})`);
+    }
+    const list = Array.isArray(data) ? data : Array.isArray(data.plugins) ? data.plugins : [];
+    const items = list
+      .filter((item) => item && typeof item === "object" && item.name && item.tool)
+      .map((item) => ({
+        name: String(item.name),
+        tool: String(item.tool),
+        args: item.args && typeof item.args === "object" ? item.args : {},
+      }));
+    return { items, file: "plugins.json" };
+  };
+
   // Быстрый обзор проекта: сколько файлов, какие расширения, где TODO.
   const scan = async ({ path: p = ".", maxFiles = 1200 } = {}) => {
     const abs = resolve(p);
@@ -655,5 +681,5 @@ export function createTools(rootDir, config = {}) {
     };
   };
 
-  return { list, tree, read, write, replace, capture, upload, staged, apply, reveal, open, diff, remove, grep, run, scan, test };
+  return { list, tree, read, write, replace, capture, upload, staged, apply, reveal, open, diff, remove, grep, run, scan, test, plugins };
 }

@@ -71,6 +71,7 @@
           <div class="wc-tree-body" id="wc-tree-body"></div>
           <div class="wc-tree-hint">ПКМ по файлу — меню · перетащите код из чата в папку</div>
         </div>
+        <div class="wc-tabs" id="wc-tabs" hidden></div>
         <div class="wc-preview" id="wc-preview" hidden>
           <div class="wc-preview-head">
             <span id="wc-preview-title"></span>
@@ -229,6 +230,7 @@
     showMenu(r.left, r.top - 6, [
       { label: "Сканировать проект", action: runScan },
       { label: "Запустить тесты", action: runTests },
+      { label: "Плагины…", action: () => openPlugins(r.left, r.top - 6) },
     ]);
   });
   $("wc-write").addEventListener("click", (e) => {
@@ -655,6 +657,42 @@
   // ---------------------------------------------------- контекстное меню ----
   let previewPath = "";
   let previewText = "";
+  const openTabs = [];
+
+  function renderTabs() {
+    const bar = $("wc-tabs");
+    if (!bar) return;
+    bar.hidden = openTabs.length === 0;
+    bar.textContent = "";
+    for (const tabPath of openTabs) {
+      const chip = document.createElement("span");
+      chip.className = "wc-tab" + (tabPath === previewPath ? " active" : "");
+      const label = document.createElement("span");
+      label.textContent = tabPath.split("/").pop();
+      label.title = tabPath;
+      label.addEventListener("click", (e) => {
+        e.stopPropagation();
+        if (tabPath !== previewPath) openPreview(tabPath);
+      });
+      const close = document.createElement("span");
+      close.className = "x";
+      close.textContent = "✕";
+      close.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const idx = openTabs.indexOf(tabPath);
+        if (idx >= 0) openTabs.splice(idx, 1);
+        if (tabPath === previewPath) {
+          $("wc-preview").hidden = true;
+          previewPath = "";
+          previewText = "";
+          $("wc-preview-edit-area") && ($("wc-preview-edit-area").hidden = true);
+        }
+        renderTabs();
+      });
+      chip.append(label, close);
+      bar.appendChild(chip);
+    }
+  }
 
   function closeMenu() {
     const m = $("wc-menu");
@@ -790,6 +828,8 @@
     const ed = $("wc-preview-edit-area");
     if (ed) ed.hidden = true;
     $("wc-preview").hidden = false;
+    if (!openTabs.includes(path)) openTabs.push(path);
+    renderTabs();
     expand();
   }
 
@@ -836,6 +876,31 @@
     await refreshStaged();
     await ping();
     if (!$("wc-tree").hidden) $("wc-tree-reload").click();
+  }
+
+  // Пользовательские действия из plugins.json.
+  async function openPlugins(x, y) {
+    const r = await exec("plugins", {});
+    if (!r || !r.ok) {
+      log(`✗ плагины: ${(r && r.error) || "?"}`, "err");
+      return;
+    }
+    const items = (r.items || []).map((item) => ({
+      label: item.name,
+      action: async () => {
+        const res = await exec(item.tool, item.args || {});
+        if (res && res.ok) log(`✓ плагин: ${item.name}`, "ok");
+        else log(`✗ плагин ${item.name}: ${(res && res.error) || "?"}`, "err");
+        await refreshStaged();
+      },
+    }));
+    if (!items.length) {
+      log("нет плагинов: создайте plugins.json в корне проекта", "warn");
+      return;
+    }
+    items.push({ sep: true });
+    items.push({ label: "Открыть plugins.json", action: () => openPreview("plugins.json") });
+    showMenu(x, y, items);
   }
 
   // Локальные проверки без модели: обзор проекта и тесты.

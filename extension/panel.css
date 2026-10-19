@@ -353,3 +353,25 @@ pre[data-wc-done="1"] {
   outline: 1px solid #2f6fed66;
   outline-offset: 2px;
 }
+
+.wc-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 6px 8px 0;
+}
+.wc-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  max-width: 45%;
+  padding: 2px 6px;
+  border-radius: 5px;
+  background: #23262d;
+  color: #c3c8d1;
+  font-size: 11px;
+  cursor: pointer;
+}
+.wc-tab.active { background: #2f6fed; color: #fff; }
+.wc-tab .x { opacity: 0.6; }
+.wc-tab .x:hover { opacity: 1; }
