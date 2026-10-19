@@ -189,6 +189,7 @@ const server = http.createServer(async (req, res) => {
       sandboxDir: cfg.sandbox !== false ? cfg.sandboxDir || "_fixes" : null,
       allowWrite: ALLOW_WRITE,
       allowRun: ALLOW_RUN,
+      directWrite: cfg.directWrite === true,
       tools: TOOL_NAMES,
       pid: process.pid,
       startedAt,
@@ -216,6 +217,21 @@ const server = http.createServer(async (req, res) => {
     if (!safeEqual(String(token), TOKEN)) return reply(res, 401, { ok: false, error: "неверный токен" });
     const roots = [ROOT, ...KNOWN_ROOTS.filter((r) => r !== ROOT && fs.existsSync(r))];
     return reply(res, 200, { ok: true, root: ROOT, roots });
+  }
+
+  if (req.method === "POST" && url.pathname === "/mode") {
+    const token = req.headers["x-webcode-token"] || "";
+    if (!safeEqual(String(token), TOKEN)) return reply(res, 401, { ok: false, error: "неверный токен" });
+    let msg;
+    try {
+      msg = JSON.parse(await readBody(req));
+    } catch (e) {
+      return reply(res, 400, { ok: false, error: `некорректный JSON: ${e.message}` });
+    }
+    cfg.directWrite = msg.direct === true;
+    saveRoots();
+    log({ event: "mode", directWrite: cfg.directWrite });
+    return reply(res, 200, { ok: true, directWrite: cfg.directWrite });
   }
 
   if (req.method === "POST" && url.pathname === "/pick-folder") {

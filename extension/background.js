@@ -68,6 +68,21 @@ async function roots() {
   }
 }
 
+async function setMode(direct) {
+  const { port, token } = await cfg();
+  try {
+    const res = await fetch(`http://127.0.0.1:${port}/mode`, {
+      method: "POST",
+      headers: { "content-type": "application/json", "x-webcode-token": token },
+      body: JSON.stringify({ direct: !!direct }),
+      cache: "no-store",
+    });
+    return await res.json();
+  } catch (e) {
+    return { ok: false, error: String(e && e.message ? e.message : e) };
+  }
+}
+
 async function pickFolder() {
   const { port, token } = await cfg();
   try {
@@ -147,6 +162,10 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   }
   if (msg.type === "pickFolder") {
     pickFolder().then(sendResponse);
+    return true;
+  }
+  if (msg.type === "setMode") {
+    setMode(msg.direct).then(sendResponse);
     return true;
   }
   if (msg.type === "exec") {

@@ -307,7 +307,7 @@ export function createTools(rootDir, config = {}) {
     if (typeof content !== "string") throw new ToolError("content должен быть строкой");
     if (config.allowWrite === false) throw new ToolError("запись отключена в конфиге шлюза");
     const abs = resolve(p);
-    if (sandbox && !direct) return stageWrite("write", abs, content, { source: "tool" });
+    if (sandbox && !direct && config.directWrite !== true) return stageWrite("write", abs, content, { source: "tool" });
     let backup = null;
     if (direct) {
       // Сохранение «как в редакторе»: файл перезаписывается сразу, со старой копией.
@@ -345,7 +345,7 @@ export function createTools(rootDir, config = {}) {
       throw new ToolError(`old встречается ${count} раз(а); уточните фрагмент или передайте all:true`);
     }
     const next = all ? text.split(old).join(neu) : text.replace(old, neu);
-    if (sandbox) return stageWrite("replace", abs, next, { source: "tool", replaced: all ? count : 1 });
+    if (sandbox && config.directWrite !== true) return stageWrite("replace", abs, next, { source: "tool", replaced: all ? count : 1 });
     await fsp.writeFile(abs, next, "utf8");
     return { staged: false, path: relOf(abs), replaced: all ? count : 1, bytes: Buffer.byteLength(next) };
   };

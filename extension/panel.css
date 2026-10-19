@@ -375,3 +375,9 @@ pre[data-wc-done="1"] {
 .wc-tab.active { background: #2f6fed; color: #fff; }
 .wc-tab .x { opacity: 0.6; }
 .wc-tab .x:hover { opacity: 1; }
+
+.wc-btn.wc-active {
+  background: #2f6fed;
+  color: #fff;
+  border-color: #2f6fed;
+}

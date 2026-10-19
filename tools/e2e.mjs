@@ -559,6 +559,25 @@ async function main() {
     return "1 plugin";
   });
 
+  await check("workspace write: режим прямой записи", async () => {
+    const on = await fetch(`http://127.0.0.1:${PORT}/mode`, {
+      method: "POST",
+      headers: { "content-type": "application/json", "x-webcode-token": TOKEN },
+      body: JSON.stringify({ direct: true }),
+    }).then((r) => r.json());
+    assert(on.ok && on.directWrite === true, JSON.stringify(on));
+    const { body } = await api("write", { path: "src/mode_write.txt", content: "mode\n" });
+    assert(body.ok && body.staged === false, JSON.stringify(body));
+    assert(fs.readFileSync(path.join(TEST_ROOT, "src", "mode_write.txt"), "utf8") === "mode\n", "нет файла");
+    const off = await fetch(`http://127.0.0.1:${PORT}/mode`, {
+      method: "POST",
+      headers: { "content-type": "application/json", "x-webcode-token": TOKEN },
+      body: JSON.stringify({ direct: false }),
+    }).then((r) => r.json());
+    assert(off.ok && off.directWrite === false, JSON.stringify(off));
+    return "mode ok";
+  });
+
   await check("unit: sandbox=false пишет напрямую", async () => {
     const { createTools } = await import(pathToFileURL(path.join(BASE, "gateway", "tools.mjs")).href);
     const dir = path.join(BASE, ".test-nosandbox");

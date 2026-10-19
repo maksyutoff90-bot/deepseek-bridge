@@ -30,6 +30,7 @@
     baseCount: 0,
     baselineReady: false,
     userTouched: false,
+    directWrite: false,
   };
 
   // ---------------------------------------------------------------- UI ----
@@ -54,6 +55,7 @@
           <button class="wc-btn wc-ghost" id="wc-apply" title="Перенести файлы из _fixes в проект">Применить</button>
           <button class="wc-btn wc-ghost" id="wc-folder" title="Открыть папку исправлений">Папка</button>
           <button class="wc-btn wc-ghost" id="wc-project" title="Выбрать рабочую папку">Проект</button>
+          <button class="wc-btn wc-ghost" id="wc-mode" title="Прямая запись в workspace (без _fixes)">WS Write</button>
           <button class="wc-btn wc-ghost" id="wc-tree-btn" title="Файлы проекта и перетаскивание">Файлы</button>
           <button class="wc-btn wc-ghost" id="wc-check" title="Сканировать проект и запустить тесты">Проверить</button>
           <button class="wc-btn wc-ghost" id="wc-clear" title="Очистить лог">Очистить</button>
@@ -219,6 +221,18 @@
     e.stopPropagation();
     chooseProject();
   });
+  $("wc-mode").addEventListener("click", async (e) => {
+    e.stopPropagation();
+    const next = !state.directWrite;
+    const r = await chrome.runtime.sendMessage({ type: "setMode", direct: next });
+    if (!r || !r.ok) {
+      log(`✗ режим: ${(r && r.error) || "?"}`, "err");
+      return;
+    }
+    state.directWrite = r.directWrite === true;
+    $("wc-mode").classList.toggle("wc-active", state.directWrite);
+    log(state.directWrite ? "workspace write: включён" : "workspace write: выключен", "ok");
+  });
   $("wc-project").addEventListener("click", (e) => {
     e.stopPropagation();
     const rect = e.currentTarget.getBoundingClientRect();
@@ -302,6 +316,9 @@
         if (!state.pending) footEl.textContent = `шлюз: ${r.root || "127.0.0.1:" + cfg.port}`;
         if (pingState !== true) log(`шлюз на связи: ${r.root || ""}`, "ok");
         pingState = true;
+        state.directWrite = r.directWrite === true;
+        const modeBtn = $("wc-mode");
+        if (modeBtn) modeBtn.classList.toggle("wc-active", state.directWrite);
       } else {
         setDot("err", (r && r.error) || "нет связи");
         if (pingState !== false) log(`нет связи со шлюзом: ${(r && r.error) || "?"}`, "err");

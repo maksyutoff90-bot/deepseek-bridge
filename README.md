@@ -40,6 +40,7 @@ file changes.
 | Projects | **Project** button (or the footer): recent folders, native Windows folder dialog, any path |
 | File editor | Preview → ✎ → edit → 💾 saves straight into the project, old copy kept in `_fixes/.meta/backup` |
 | File tabs | Opened files appear as chips above the preview: click to switch, ✕ to close |
+| Workspace Write | Panel toggle: model edits go straight into the workspace (backup kept) instead of `_fixes` |
 | Plugins | `plugins.json` in the project root: `[{"name": "…", "tool": "…", "args": {…}}]` → Check → Plugins… |
 | Languages | English by default, Russian in the settings; switches live, no reload |
 | Safety | Sandbox staging, apply confirmation, backups, “looks like a fragment” guard, token auth |
