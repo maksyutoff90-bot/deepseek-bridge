@@ -1287,7 +1287,7 @@
   function composer() {
     const areas = [...document.querySelectorAll("textarea")].filter((t) => {
       const r = t.getBoundingClientRect();
-      return r.width > 4 && r.height > 4 && t.offsetParent !== null;
+      return r.width > 0 && r.height > 0 && t.getClientRects().length > 0;
     });
     if (!areas.length) return null;
     const byPlaceholder = areas.find((t) => /сообщ|message|send|deepseek|prompt/i.test(t.placeholder || ""));
@@ -1510,6 +1510,61 @@
       });
     } catch {}
     getCfg().then((cfg) => window.__wcI18n.setLang(cfg.lang || "en", host));
+    // Публичное API для интеграций: qutebrowser (:jseval --world main), консоль.
+    const wcApi = {
+      toggle() {
+        const head = $("wc-head");
+        if (head) head.click();
+        return "panel";
+      },
+      open() {
+        const panel = $("wc-panel");
+        if (panel && panel.classList.contains("wc-collapsed")) $("wc-head").click();
+        return "panel";
+      },
+      scan() {
+        runScan();
+        return "scan started";
+      },
+      tests() {
+        runTests();
+        return "tests started";
+      },
+      apply() {
+        applyAll();
+        return "apply";
+      },
+      tree() {
+        $("wc-tree-btn").click();
+        return "tree";
+      },
+      toChat(path) {
+        sendFileToChat(String(path || ""));
+        return "to chat: " + path;
+      },
+      send() {
+        $("wc-send").click();
+        return "send";
+      },
+      clear() {
+        $("wc-clear").click();
+        return "cleared";
+      },
+      log(text) {
+        log(String(text), "dim");
+        return "ok";
+      },
+    };
+    // В qutebrowser window изолирован обёрткой GM, поэтому вешаем ещё на DOM.
+    try {
+      window.__wc = wcApi;
+    } catch {}
+    try {
+      if (typeof unsafeWindow !== "undefined") unsafeWindow.__wc = wcApi;
+    } catch {}
+    try {
+      document.documentElement.__wc = wcApi;
+    } catch {}
     armSettle();
     // Переключение чатов в сайдбаре — SPA-навигация без перезагрузки.
     let lastUrl = location.href;
