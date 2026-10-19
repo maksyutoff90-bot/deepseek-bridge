@@ -1,15 +1,10 @@
 const DEFAULTS = { port: 8787, token: "", autoSend: false, capture: true, noAutoExpand: false, lang: "en" };
 const $ = (id) => document.getElementById(id);
 
-async function fetchToken(port) {
+async function fetchToken() {
   try {
-    const res = await fetch(`http://127.0.0.1:${port}/token`, {
-      headers: { "x-webcode-setup": "1" },
-      cache: "no-store",
-    });
-    if (!res.ok) return "";
-    const body = await res.json();
-    return body && body.ok && body.token ? String(body.token) : "";
+    const res = await chrome.runtime.sendMessage({ type: "token" });
+    return res && res.ok && res.token ? String(res.token) : "";
   } catch {
     return "";
   }
@@ -24,7 +19,7 @@ async function load() {
   $("capture").checked = cfg.capture !== false;
   $("collapse").checked = !!cfg.noAutoExpand;
   if (!cfg.token) {
-    const token = await fetchToken(Number(cfg.port) || DEFAULTS.port);
+    const token = await fetchToken();
     if (token) {
       $("token").value = token;
       await chrome.storage.local.set({ token });

@@ -565,6 +565,8 @@ async function main() {
 
     const cfg0 = await send({ type: "config" });
     assert(cfg0.port === 8787 && typeof cfg0.token === "string" && cfg0.autoSend === false, "дефолты неверные: " + JSON.stringify(cfg0));
+    const tok = await send({ type: "token" });
+    assert(tok && tok.ok === Boolean(tok.token), "ответ token неверный: " + JSON.stringify(tok));
 
     store.port = PORT;
     store.token = TOKEN;

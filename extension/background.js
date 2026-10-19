@@ -84,6 +84,10 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     cfg().then(sendResponse);
     return true;
   }
+  if (msg.type === "token") {
+    cfg().then((c) => sendResponse({ ok: !!c.token, token: c.token }));
+    return true;
+  }
   if (msg.type === "ping") {
     ping().then(sendResponse);
     return true;
