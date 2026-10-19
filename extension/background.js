@@ -7,6 +7,12 @@ chrome.runtime.onInstalled.addListener(async () => {
   const patch = {};
   for (const [k, v] of Object.entries(DEFAULTS)) if (cur[k] === undefined) patch[k] = v;
   if (Object.keys(patch).length) await chrome.storage.local.set(patch);
+  await cfg();
+});
+
+// Токен дозабираем при старте браузера, не дожидаясь открытия чата.
+chrome.runtime.onStartup?.addListener(() => {
+  cfg();
 });
 
 async function fetchToken(port) {
