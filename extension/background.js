@@ -16,11 +16,13 @@ chrome.runtime.onStartup?.addListener(() => {
 });
 
 async function fetchToken(port) {
+  const url = `http://127.0.0.1:${port}/token`;
   try {
-    const res = await fetch(`http://127.0.0.1:${port}/token`, {
-      headers: { "x-webcode-setup": "1" },
-      cache: "no-store",
-    });
+    // Сначала простой GET (Firefox не любит preflight), затем с заголовком.
+    let res = await fetch(url, { cache: "no-store" });
+    if (res.status === 403) {
+      res = await fetch(url, { headers: { "x-webcode-setup": "1" }, cache: "no-store" });
+    }
     if (!res.ok) return "";
     const body = await res.json();
     return body && body.ok && body.token ? String(body.token) : "";

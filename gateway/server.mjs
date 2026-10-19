@@ -154,13 +154,16 @@ const server = http.createServer(async (req, res) => {
   // Автонастройка расширения: токен отдаётся только по специальному заголовку.
   // Обычные сайты такой запрос отправить не могут (preflight не разрешён).
   if (req.method === "GET" && url.pathname === "/token") {
-    if (req.headers["x-webcode-setup"] !== "1") {
-      res.writeHead(403, { "content-type": "application/json; charset=utf-8", "cache-control": "no-store" });
-      return res.end(JSON.stringify({ ok: false, error: "forbidden" }));
+    // Заголовок обязателен: сайт не сможет его отправить (preflight не разрешает),
+    // поэтому CORS-заголовки здесь безопасны и нужны Firefox-расширениям.
+    const origin = String(req.headers.origin || "");
+    const fromExtension =
+      origin.startsWith("moz-extension://") || origin.startsWith("chrome-extension://");
+    if (req.headers["x-webcode-setup"] !== "1" && !fromExtension) {
+      return reply(res, 403, { ok: false, error: "forbidden" });
     }
-    log({ event: "token_issued", ip: req.socket.remoteAddress });
-    res.writeHead(200, { "content-type": "application/json; charset=utf-8", "cache-control": "no-store" });
-    return res.end(JSON.stringify({ ok: true, token: TOKEN }));
+    log({ event: "token_issued", ip: req.socket.remoteAddress, origin: origin || null });
+    return reply(res, 200, { ok: true, token: TOKEN });
   }
 
   if (req.method === "POST" && url.pathname === "/exec") {
