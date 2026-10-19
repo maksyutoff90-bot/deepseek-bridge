@@ -29,10 +29,23 @@ try {
     process.exit(1);
   }
 }
-const ROOT = path.resolve(cli("--root", cfg.root || process.cwd()));
+const ROOTS_FILE = path.join(path.dirname(configPath), "roots.json");
+let savedRoots = { root: "", roots: [] };
+try {
+  savedRoots = JSON.parse(fs.readFileSync(ROOTS_FILE, "utf8"));
+} catch {}
+let ROOT = path.resolve(cli("--root", cfg.root || savedRoots.root || process.cwd()));
 if (!fs.existsSync(ROOT) || !fs.statSync(ROOT).isDirectory()) {
   console.error(`корень проекта не найден: ${ROOT}`);
   process.exit(1);
+}
+let KNOWN_ROOTS = Array.isArray(savedRoots.roots) ? savedRoots.roots.slice() : [];
+if (!KNOWN_ROOTS.includes(ROOT)) KNOWN_ROOTS.unshift(ROOT);
+
+function saveRoots() {
+  try {
+    fs.writeFileSync(ROOTS_FILE, JSON.stringify({ root: ROOT, roots: KNOWN_ROOTS }, null, 2));
+  } catch {}
 }
 const PORT = Number(cli("--port", cfg.port || 8787));
 const ALLOW_WRITE = cfg.allowWrite !== false;
@@ -51,8 +64,8 @@ if (!TOKEN) {
   fs.writeFileSync(TOKEN_FILE, TOKEN, { mode: 0o600 });
 }
 
-const tools = createTools(ROOT, cfg);
-const TOOL_NAMES = Object.keys(tools);
+let tools = createTools(ROOT, cfg);
+let TOOL_NAMES = Object.keys(tools);
 const startedAt = new Date().toISOString();
 const LOG_DIR = path.join(ROOTDIR, "logs");
 fs.mkdirSync(LOG_DIR, { recursive: true });
@@ -164,6 +177,42 @@ const server = http.createServer(async (req, res) => {
     }
     log({ event: "token_issued", ip: req.socket.remoteAddress, origin: origin || null });
     return reply(res, 200, { ok: true, token: TOKEN });
+  }
+
+  // Список проектов и переключение рабочей папки (только с токеном).
+  if (req.method === "GET" && url.pathname === "/roots") {
+    const token = req.headers["x-webcode-token"] || "";
+    if (!safeEqual(String(token), TOKEN)) return reply(res, 401, { ok: false, error: "неверный токен" });
+    const roots = [ROOT, ...KNOWN_ROOTS.filter((r) => r !== ROOT && fs.existsSync(r))];
+    return reply(res, 200, { ok: true, root: ROOT, roots });
+  }
+
+  if (req.method === "POST" && url.pathname === "/root") {
+    const token = req.headers["x-webcode-token"] || "";
+    if (!safeEqual(String(token), TOKEN)) return reply(res, 401, { ok: false, error: "неверный токен" });
+    let msg;
+    try {
+      msg = JSON.parse(await readBody(req));
+    } catch (e) {
+      return reply(res, 400, { ok: false, error: `некорректный JSON: ${e.message}` });
+    }
+    const raw = String(msg.path || "").trim();
+    if (!raw) return reply(res, 400, { ok: false, error: "не указана папка" });
+    const target = path.resolve(path.isAbsolute(raw) ? raw : path.join(ROOT, raw));
+    let stat;
+    try {
+      stat = fs.statSync(target);
+    } catch {
+      return reply(res, 400, { ok: false, error: `папка не найдена: ${target}` });
+    }
+    if (!stat.isDirectory()) return reply(res, 400, { ok: false, error: `это не папка: ${target}` });
+    ROOT = target;
+    tools = createTools(ROOT, cfg);
+    TOOL_NAMES = Object.keys(tools);
+    KNOWN_ROOTS = [ROOT, ...KNOWN_ROOTS.filter((r) => path.resolve(r) !== ROOT)].slice(0, 12);
+    saveRoots();
+    log({ event: "root_changed", root: ROOT });
+    return reply(res, 200, { ok: true, root: ROOT, roots: KNOWN_ROOTS });
   }
 
   if (req.method === "POST" && url.pathname === "/exec") {

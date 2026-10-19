@@ -55,6 +55,34 @@ async function ping() {
   }
 }
 
+async function roots() {
+  const { port, token } = await cfg();
+  try {
+    const res = await fetch(`http://127.0.0.1:${port}/roots`, {
+      headers: { "x-webcode-token": token },
+      cache: "no-store",
+    });
+    return await res.json();
+  } catch (e) {
+    return { ok: false, error: String(e && e.message ? e.message : e) };
+  }
+}
+
+async function setRoot(path) {
+  const { port, token } = await cfg();
+  try {
+    const res = await fetch(`http://127.0.0.1:${port}/root`, {
+      method: "POST",
+      headers: { "content-type": "application/json", "x-webcode-token": token },
+      body: JSON.stringify({ path }),
+      cache: "no-store",
+    });
+    return await res.json();
+  } catch (e) {
+    return { ok: false, error: String(e && e.message ? e.message : e) };
+  }
+}
+
 async function exec(payload) {
   const { port, token } = await cfg();
   if (!token) return { ok: false, error: "токен не задан: откройте настройки расширения" };
@@ -92,6 +120,14 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   }
   if (msg.type === "ping") {
     ping().then(sendResponse);
+    return true;
+  }
+  if (msg.type === "roots") {
+    roots().then(sendResponse);
+    return true;
+  }
+  if (msg.type === "setRoot") {
+    setRoot(msg.path).then(sendResponse);
     return true;
   }
   if (msg.type === "exec") {

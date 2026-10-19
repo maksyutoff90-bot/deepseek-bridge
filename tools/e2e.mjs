@@ -502,6 +502,35 @@ async function main() {
     return "403 / 200";
   });
 
+  await check("проекты: список и переключение", async () => {
+    const bad = await fetch(`http://127.0.0.1:${PORT}/roots`);
+    assert(bad.status === 401, "без токена: " + bad.status);
+    const list = await fetch(`http://127.0.0.1:${PORT}/roots`, {
+      headers: { "x-webcode-token": TOKEN },
+    }).then((r) => r.json());
+    assert(list.ok && list.root, JSON.stringify(list));
+    const target = path.join(TEST_ROOT, "src");
+    const set = await fetch(`http://127.0.0.1:${PORT}/root`, {
+      method: "POST",
+      headers: { "content-type": "application/json", "x-webcode-token": TOKEN },
+      body: JSON.stringify({ path: target }),
+    }).then((r) => r.json());
+    assert(set.ok && path.resolve(set.root) === path.resolve(target), JSON.stringify(set));
+    const back = await fetch(`http://127.0.0.1:${PORT}/root`, {
+      method: "POST",
+      headers: { "content-type": "application/json", "x-webcode-token": TOKEN },
+      body: JSON.stringify({ path: TEST_ROOT }),
+    }).then((r) => r.json());
+    assert(back.ok && path.resolve(back.root) === path.resolve(TEST_ROOT), JSON.stringify(back));
+    const missing = await fetch(`http://127.0.0.1:${PORT}/root`, {
+      method: "POST",
+      headers: { "content-type": "application/json", "x-webcode-token": TOKEN },
+      body: JSON.stringify({ path: path.join(TEST_ROOT, "no-such-dir") }),
+    }).then((r) => r.json());
+    assert(missing.ok === false, "несуществующая папка принята");
+    return "roots ok";
+  });
+
   await check("unit: sandbox=false пишет напрямую", async () => {
     const { createTools } = await import(pathToFileURL(path.join(BASE, "gateway", "tools.mjs")).href);
     const dir = path.join(BASE, ".test-nosandbox");

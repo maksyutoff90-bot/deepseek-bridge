@@ -209,6 +209,12 @@
     e.stopPropagation();
     logEl.textContent = "";
   });
+  footEl.style.cursor = "pointer";
+  footEl.title = "Выбрать рабочую папку";
+  footEl.addEventListener("click", (e) => {
+    e.stopPropagation();
+    chooseProject();
+  });
   $("wc-check").addEventListener("click", (e) => {
     e.stopPropagation();
     const r = e.currentTarget.getBoundingClientRect();
@@ -758,6 +764,40 @@
     $("wc-preview-body").textContent = r.content;
     $("wc-preview").hidden = false;
     expand();
+  }
+
+  // Выбор рабочей папки (проекта) — как список workspace в редакторе.
+  async function chooseProject() {
+    const r = await chrome.runtime.sendMessage({ type: "roots" });
+    if (!r || !r.ok) {
+      log(`✗ проекты: ${(r && r.error) || "?"}`, "err");
+      return;
+    }
+    const items = r.roots.map((p) => ({
+      label: p === r.root ? `✓ ${p}` : p,
+      action: () => switchProject(p),
+    }));
+    items.push({
+      label: "Другая папка…",
+      action: () => {
+        const p = prompt("Папка проекта:", r.root);
+        if (p && p.trim()) switchProject(p.trim());
+      },
+    });
+    const rect = footEl.getBoundingClientRect();
+    showMenu(rect.left, rect.top - 8, items);
+  }
+
+  async function switchProject(path) {
+    const r = await chrome.runtime.sendMessage({ type: "setRoot", path });
+    if (!r || !r.ok) {
+      log(`✗ проект: ${(r && r.error) || "?"}`, "err");
+      return;
+    }
+    log(`проект: ${r.root}`, "ok");
+    await refreshStaged();
+    await ping();
+    if (!$("wc-tree").hidden) $("wc-tree-reload").click();
   }
 
   // Локальные проверки без модели: обзор проекта и тесты.
