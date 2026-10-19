@@ -809,6 +809,25 @@ async function main() {
     return "меню и предпросмотр ок";
   });
 
+  await check("дерево: файл → в чат (модель видит код)", async () => {
+    await clearComposer(page);
+    await page.eval(`(() => {
+      const r = document.querySelector('.wc-tree-row[data-path="hello.txt"]');
+      const rect = r.getBoundingClientRect();
+      r.dispatchEvent(new MouseEvent("contextmenu", { bubbles: true, cancelable: true, clientX: rect.left + 10, clientY: rect.top + 5 }));
+      return true;
+    })()`);
+    await waitFor(page, `!!document.querySelector("#wc-menu")`, 5000, "меню");
+    await page.eval(`(() => {
+      [...document.querySelectorAll(".wc-menu-item")].find((i) => i.textContent === "Send to chat").click();
+      return true;
+    })()`);
+    await waitFor(page, `((document.querySelector("#composer")||{}).value||"").includes("hello webcode")`, 8000, "файл в поле ввода");
+    const val = await composerValue(page);
+    assert(val.includes("File: hello.txt"), "нет заголовка файла: " + val.slice(0, 140));
+    return "ok";
+  });
+
   await check("мост: выход за root не выполняется", async () => {
     await clearComposer(page);
     await simulate(page, { tool: "read", args: { path: "../outside-secret.txt" } });

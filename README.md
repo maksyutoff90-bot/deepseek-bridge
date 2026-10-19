@@ -33,6 +33,7 @@ file changes.
 | Manual write | **Write** takes code from the last answer, shows the file paths (editable), and writes on confirm |
 | File tree | Project tree in the panel: lazy folders, **drag & drop** code into a folder, drop files from Explorer, drag a file into the chat input to insert its path |
 | Context menu | Right-click a file: open in VS Code, diff with the pending edit, preview, copy path, delete to trash |
+| Send to chat | Right-click a file → its contents go into the composer with the path, so the model can analyse the code |
 | Diff | `code --diff _fixes/... original` opens in VS Code |
 | Panel | Floating or docked to the right, resizable by dragging the left edge |
 | Languages | English by default, Russian in the settings; switches live, no reload |

@@ -693,6 +693,7 @@
       { label: "Открыть в VS Code", action: () => openInEditor(p) },
       { label: "Показать diff", action: () => showDiff(p) },
       { label: "Прочитать", action: () => openPreview(p) },
+      { label: "Отправить в чат", action: () => sendFileToChat(p) },
       { sep: true },
       { label: "Скопировать путь", action: () => copyPath(p) },
       { label: "Удалить (в корзину)", action: () => removeFile(p) },
@@ -748,6 +749,32 @@
     $("wc-preview-body").textContent = r.content;
     $("wc-preview").hidden = false;
     expand();
+  }
+
+  // Отправить содержимое файла в поле ввода чата (модель сразу видит код).
+  async function sendFileToChat(path) {
+    const r = await exec("read", { path });
+    if (!r || !r.ok) {
+      log(`✗ ${path}: ${(r && r.error) || "?"}`, "err");
+      return;
+    }
+    const raw = String(r.content || "")
+      .split(/\r?\n/)
+      .map((line) => line.replace(/^\s*\d+\| /, ""))
+      .join("\n");
+    const cut = raw.length > 20000 ? `${raw.slice(0, 20000)}\n…[truncated]` : raw;
+    const lang = (path.split(".").pop() || "").toLowerCase();
+    const block = `File: ${path}\n\`\`\`${lang}\n${cut}\n\`\`\``;
+    const ta = composer();
+    if (!ta) {
+      state.pending = block;
+      updateSend();
+      log("не нашёл поле ввода — текст сохранён в панели", "warn");
+      return;
+    }
+    const text = ta.value ? `${ta.value.replace(/\s+$/, "")}\n\n${block}` : block;
+    fillComposer(text);
+    log(`отправил в чат: ${path}`, "ok");
   }
 
   // Код из чата можно тащить: помечаем все <pre> перетаскиваемыми.
