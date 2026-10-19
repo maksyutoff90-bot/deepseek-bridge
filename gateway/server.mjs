@@ -151,6 +151,18 @@ const server = http.createServer(async (req, res) => {
     });
   }
 
+  // Автонастройка расширения: токен отдаётся только по специальному заголовку.
+  // Обычные сайты такой запрос отправить не могут (preflight не разрешён).
+  if (req.method === "GET" && url.pathname === "/token") {
+    if (req.headers["x-webcode-setup"] !== "1") {
+      res.writeHead(403, { "content-type": "application/json; charset=utf-8", "cache-control": "no-store" });
+      return res.end(JSON.stringify({ ok: false, error: "forbidden" }));
+    }
+    log({ event: "token_issued", ip: req.socket.remoteAddress });
+    res.writeHead(200, { "content-type": "application/json; charset=utf-8", "cache-control": "no-store" });
+    return res.end(JSON.stringify({ ok: true, token: TOKEN }));
+  }
+
   if (req.method === "POST" && url.pathname === "/exec") {
     let msg;
     try {

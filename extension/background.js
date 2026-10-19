@@ -9,9 +9,31 @@ chrome.runtime.onInstalled.addListener(async () => {
   if (Object.keys(patch).length) await chrome.storage.local.set(patch);
 });
 
+async function fetchToken(port) {
+  try {
+    const res = await fetch(`http://127.0.0.1:${port}/token`, {
+      headers: { "x-webcode-setup": "1" },
+      cache: "no-store",
+    });
+    if (!res.ok) return "";
+    const body = await res.json();
+    return body && body.ok && body.token ? String(body.token) : "";
+  } catch {
+    return "";
+  }
+}
+
 async function cfg() {
   const cur = await chrome.storage.local.get(Object.keys(DEFAULTS));
-  return { ...DEFAULTS, ...cur };
+  const conf = { ...DEFAULTS, ...cur };
+  if (!conf.token) {
+    const token = await fetchToken(conf.port);
+    if (token) {
+      await chrome.storage.local.set({ token });
+      conf.token = token;
+    }
+  }
+  return conf;
 }
 
 async function ping() {

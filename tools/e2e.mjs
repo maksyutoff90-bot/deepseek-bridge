@@ -493,6 +493,15 @@ async function main() {
     return "exit 0";
   });
 
+  await check("gateway: /token только по заголовку", async () => {
+    const bad = await fetch(`http://127.0.0.1:${PORT}/token`);
+    assert(bad.status === 403, "без заголовка: " + bad.status);
+    const good = await fetch(`http://127.0.0.1:${PORT}/token`, { headers: { "x-webcode-setup": "1" } });
+    const body = await good.json();
+    assert(good.status === 200 && body.token === TOKEN, "токен не совпал");
+    return "403 / 200";
+  });
+
   await check("unit: sandbox=false пишет напрямую", async () => {
     const { createTools } = await import(pathToFileURL(path.join(BASE, "gateway", "tools.mjs")).href);
     const dir = path.join(BASE, ".test-nosandbox");
@@ -555,7 +564,7 @@ async function main() {
     const send = (msg) => new Promise((res) => listeners[0](msg, {}, res));
 
     const cfg0 = await send({ type: "config" });
-    assert(cfg0.port === 8787 && cfg0.token === "" && cfg0.autoSend === false, "дефолты неверные: " + JSON.stringify(cfg0));
+    assert(cfg0.port === 8787 && typeof cfg0.token === "string" && cfg0.autoSend === false, "дефолты неверные: " + JSON.stringify(cfg0));
 
     store.port = PORT;
     store.token = TOKEN;
