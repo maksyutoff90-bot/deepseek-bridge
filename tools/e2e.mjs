@@ -478,6 +478,21 @@ async function main() {
     return body.error;
   });
 
+  await check("scan: обзор проекта", async () => {
+    await fsp.writeFile(path.join(TEST_ROOT, "todo_probe.py"), "# TODO probe`n", "utf8");
+    const { body } = await api("scan", {});
+    assert(body.ok && body.files >= 3, JSON.stringify(body));
+    assert(body.byExt.some((e) => e.name === ".py"), "нет .py в статистике");
+    assert(body.todos >= 1, "TODO не найден");
+    return `${body.files} файлов, TODO=${body.todos}`;
+  });
+
+  await check("test: прогон команды", async () => {
+    const { body } = await api("test", { command: "echo test-ok" });
+    assert(body.ok && body.code === 0 && /test-ok/.test(body.tail), JSON.stringify(body));
+    return "exit 0";
+  });
+
   await check("unit: sandbox=false пишет напрямую", async () => {
     const { createTools } = await import(pathToFileURL(path.join(BASE, "gateway", "tools.mjs")).href);
     const dir = path.join(BASE, ".test-nosandbox");
@@ -807,6 +822,19 @@ async function main() {
     const text = await page.eval(`document.querySelector("#wc-preview-body").textContent`);
     assert(text.includes("hello webcode"), "предпросмотр пуст: " + text.slice(0, 80));
     return "меню и предпросмотр ок";
+  });
+
+  await check("кнопка «Проверить»: скан проекта", async () => {
+    await page.eval(`document.querySelector("#wc-check").click()`);
+    await waitFor(page, `!!document.querySelector("#wc-menu")`, 5000, "меню проверок");
+    const items = await page.eval(`[...document.querySelectorAll(".wc-menu-item")].map((i) => i.textContent)`);
+    assert(items.includes("Scan project") && items.includes("Run tests"), "нет пунктов: " + items.join(", "));
+    await page.eval(`(() => {
+      [...document.querySelectorAll(".wc-menu-item")].find((i) => i.textContent === "Scan project").click();
+      return true;
+    })()`);
+    await waitFor(page, `((document.querySelector("#wc-log")||{}).innerText||"").includes("scan:")`, 20000, "результат скана");
+    return "scan ok";
   });
 
   await check("дерево: файл → в чат (модель видит код)", async () => {

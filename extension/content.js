@@ -54,6 +54,7 @@
           <button class="wc-btn wc-ghost" id="wc-apply" title="Перенести файлы из _fixes в проект">Применить</button>
           <button class="wc-btn wc-ghost" id="wc-folder" title="Открыть папку исправлений">Папка</button>
           <button class="wc-btn wc-ghost" id="wc-tree-btn" title="Файлы проекта и перетаскивание">Файлы</button>
+          <button class="wc-btn wc-ghost" id="wc-check" title="Сканировать проект и запустить тесты">Проверить</button>
           <button class="wc-btn wc-ghost" id="wc-clear" title="Очистить лог">Очистить</button>
           <button class="wc-btn wc-ghost" id="wc-opts" title="Настройки">⚙</button>
         </div>
@@ -207,6 +208,14 @@
   $("wc-clear").addEventListener("click", (e) => {
     e.stopPropagation();
     logEl.textContent = "";
+  });
+  $("wc-check").addEventListener("click", (e) => {
+    e.stopPropagation();
+    const r = e.currentTarget.getBoundingClientRect();
+    showMenu(r.left, r.top - 6, [
+      { label: "Сканировать проект", action: runScan },
+      { label: "Запустить тесты", action: runTests },
+    ]);
   });
   $("wc-write").addEventListener("click", (e) => {
     e.stopPropagation();
@@ -749,6 +758,36 @@
     $("wc-preview-body").textContent = r.content;
     $("wc-preview").hidden = false;
     expand();
+  }
+
+  // Локальные проверки без модели: обзор проекта и тесты.
+  async function runScan() {
+    log("сканирую проект…", "dim");
+    const r = await exec("scan", {});
+    if (!r || !r.ok) {
+      log(`✗ скан: ${(r && r.error) || "?"}`, "err");
+      return;
+    }
+    const mb = (r.totalBytes / 1024 / 1024).toFixed(1);
+    log(`скан: ${r.files} файлов, ${mb} МБ`, "ok");
+    if (r.byExt && r.byExt.length) log(`расширения: ${r.byExt.map((e) => `${e.name} ${e.count}`).join(", ")}`, "dim");
+    if (r.todos) log(`TODO/FIXME/HACK: ${r.todos}`, "warn");
+    if (r.largest && r.largest.length) {
+      log(`крупнейшие: ${r.largest.map((f) => `${f.file} (${Math.round(f.size / 1024)} КБ)`).join(", ")}`, "dim");
+    }
+  }
+
+  async function runTests() {
+    log("запускаю тесты…", "dim");
+    const r = await exec("test", {});
+    if (!r || !r.ok) {
+      log(`✗ тесты: ${(r && r.error) || "?"}`, "err");
+      return;
+    }
+    log(`тесты: код ${r.code}${r.timedOut ? " (таймаут)" : ""}, ${(r.durationMs / 1000).toFixed(1)} с`, r.code === 0 ? "ok" : "err");
+    if (r.tail) {
+      for (const line of String(r.tail).split("\n").slice(-8)) log(line, r.code === 0 ? "dim" : "err");
+    }
   }
 
   // Отправить содержимое файла в поле ввода чата (модель сразу видит код).

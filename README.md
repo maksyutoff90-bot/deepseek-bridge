@@ -34,6 +34,7 @@ file changes.
 | File tree | Project tree in the panel: lazy folders, **drag & drop** code into a folder, drop files from Explorer, drag a file into the chat input to insert its path |
 | Context menu | Right-click a file: open in VS Code, diff with the pending edit, preview, copy path, delete to trash |
 | Send to chat | Right-click a file → its contents go into the composer with the path, so the model can analyse the code |
+| Local checks | **Check** → scan the project (files, sizes, extensions, TODOs) or run the tests (`run_tests.bat` / `pytest`) without the model |
 | Diff | `code --diff _fixes/... original` opens in VS Code |
 | Panel | Floating or docked to the right, resizable by dragging the left edge |
 | Languages | English by default, Russian in the settings; switches live, no reload |

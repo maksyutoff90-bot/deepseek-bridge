@@ -19,7 +19,7 @@ export class ToolError extends Error {
 const SKIP_DIRS = new Set([
   ".git", "node_modules", ".venv", "venv", "__pycache__", ".pytest_cache",
   ".mypy_cache", ".ruff_cache", ".idea", "dist", "build", ".next", "wandb",
-  "site-packages", ".cache", ".tox", "_fixes",
+  "site-packages", ".cache", ".tox", "_fixes", "_hk", "logs", ".dsh-pro", "voices",
 ]);
 const MAX_FILE_BYTES = 2 * 1024 * 1024; // не индексируем файлы больше 2 МБ
 const MAX_READ_BYTES = 400 * 1024;
@@ -99,7 +99,7 @@ function walk(dir, opts = {}) {
     for (const e of entries) {
       const abs = path.join(d, e.name);
       if (e.isDirectory()) {
-        if (SKIP_DIRS.has(e.name)) continue;
+        if (SKIP_DIRS.has(e.name) || e.name.startsWith("tmp")) continue;
         onDir?.(abs, e.name, depth);
         if (depth + 1 < maxDepth) stack.push({ dir: abs, depth: depth + 1 });
       } else if (e.isFile()) {
@@ -486,6 +486,69 @@ export function createTools(rootDir, config = {}) {
     return { removed: rel, trashed: trashRel };
   };
 
+  // Быстрый обзор проекта: сколько файлов, какие расширения, где TODO.
+  const scan = async ({ path: p = ".", maxFiles = 1200 } = {}) => {
+    const abs = resolve(p);
+    const ext = {};
+    const largest = [];
+    let files = 0;
+    let total = 0;
+    let todos = 0;
+    walk(abs, {
+      maxFiles: Math.max(50, Math.min(5000, Number(maxFiles) || 1200)),
+      onFile: (file) => {
+        let st;
+        try {
+          st = fs.statSync(file);
+        } catch {
+          return;
+        }
+        files++;
+        total += st.size;
+        const e = (path.extname(file) || "(no ext)").toLowerCase();
+        ext[e] = (ext[e] || 0) + 1;
+        if (st.size > 20 * 1024) largest.push({ file: relOf(file), size: st.size });
+        if (st.size < 256 * 1024) {
+          try {
+            const buf = fs.readFileSync(file);
+            if (!buf.slice(0, 8192).includes(0)) {
+              const m = buf.toString("utf8").match(/\b(TODO|FIXME|HACK)\b/g);
+              if (m) todos += m.length;
+            }
+          } catch {}
+        }
+      },
+    });
+    largest.sort((a, b) => b.size - a.size);
+    const byExt = Object.entries(ext)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 6)
+      .map(([name, count]) => ({ name, count }));
+    return { files, totalBytes: total, byExt, todos, largest: largest.slice(0, 5) };
+  };
+
+  // Прогон тестов: по умолчанию ищет run_tests.bat / pytest.
+  const test = async ({ command, cwd = ".", timeoutMs } = {}) => {
+    if (config.allowRun === false) throw new ToolError("выполнение команд отключено в конфиге шлюза");
+    const absCwd = resolve(cwd);
+    let cmd = command;
+    if (!cmd) {
+      if (fs.existsSync(path.join(absCwd, "run_tests.bat"))) cmd = "run_tests.bat";
+      else if (
+        fs.existsSync(path.join(absCwd, "pytest.ini")) ||
+        fs.existsSync(path.join(absCwd, "pyproject.toml")) ||
+        fs.existsSync(path.join(absCwd, "tests"))
+      ) {
+        cmd = "python -m pytest -x -q";
+      } else {
+        throw new ToolError("не нашёл, чем запускать тесты — передайте command");
+      }
+    }
+    const r = await run({ command: cmd, cwd, timeoutMs: Math.max(10000, Math.min(600000, Number(timeoutMs) || 180000)) });
+    const tail = `${r.stdout || ""}\n${r.stderr || ""}`.split(/\r?\n/).filter(Boolean).slice(-12).join("\n");
+    return { command: cmd, code: r.code, timedOut: r.timedOut, durationMs: r.durationMs, tail };
+  };
+
   const grep = async ({ pattern, path: p = ".", glob, ignoreCase = true, maxResults = 100 } = {}) => {
     if (!pattern) throw new ToolError("не указан pattern");
     let re;
@@ -579,5 +642,5 @@ export function createTools(rootDir, config = {}) {
     };
   };
 
-  return { list, tree, read, write, replace, capture, upload, staged, apply, reveal, open, diff, remove, grep, run };
+  return { list, tree, read, write, replace, capture, upload, staged, apply, reveal, open, diff, remove, grep, run, scan, test };
 }
