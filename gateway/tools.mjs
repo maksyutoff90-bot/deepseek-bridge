@@ -352,11 +352,30 @@ export function createTools(rootDir, config = {}) {
 
   // Приём готового файла из ответа модели (без блоков webcode).
   const capture = async ({ path: p, content, source = "code-block" } = {}) => {
-    if (!sandbox) throw new ToolError("захват кода работает только в режиме песочницы (sandbox: true)");
     if (!p) throw new ToolError("не указан path");
     if (typeof content !== "string" || !content.trim()) throw new ToolError("пустой content");
     const abs = resolve(p);
-    return stageWrite("capture", abs, content, { source });
+    if (sandbox && config.directWrite !== true) return stageWrite("capture", abs, content, { source });
+    // Workspace Write: код из ответа сохраняется прямо в проект, старая версия — в бэкап.
+    let backup = null;
+    try {
+      const prev = await fsp.readFile(abs);
+      const stamp = new Date().toISOString().replace(/[:.]/g, "-");
+      const backupAbs = path.join(metaDir, "backup", stamp, relOf(abs));
+      await fsp.mkdir(path.dirname(backupAbs), { recursive: true });
+      await fsp.writeFile(backupAbs, prev);
+      backup = relOf(backupAbs);
+    } catch {}
+    await fsp.mkdir(path.dirname(abs), { recursive: true });
+    await fsp.writeFile(abs, content, "utf8");
+    const st = await fsp.stat(abs);
+    return {
+      staged: false,
+      path: relOf(abs),
+      bytes: st.size,
+      lines: content.split(/\r?\n/).length,
+      ...(backup ? { backup } : {}),
+    };
   };
 
   // Приём файла, перетащенного из проводника (base64, до 2 МБ).

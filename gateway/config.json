@@ -7,5 +7,6 @@
   "allowWrite": true,
   "allowRun": true,
   "runTimeoutMs": 30000,
-  "mock": true
+  "mock": true,
+  "directWrite": true
 }
