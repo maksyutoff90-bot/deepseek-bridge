@@ -531,6 +531,22 @@ async function main() {
     return "roots ok";
   });
 
+  await check("проекты: /pick-folder только с токеном", async () => {
+    const bad = await fetch(`http://127.0.0.1:${PORT}/pick-folder`, { method: "POST" });
+    assert(bad.status === 401, "без токена: " + bad.status);
+    return "401";
+  });
+
+  await check("write: direct сохраняет в проект с бэкапом", async () => {
+    const target = "src/direct_save.txt";
+    const { body: first } = await api("write", { path: target, content: "direct\n", direct: true });
+    assert(first.ok && first.staged === false, JSON.stringify(first));
+    assert(fs.readFileSync(path.join(TEST_ROOT, target), "utf8") === "direct\n", "файл не записан");
+    const { body: second } = await api("write", { path: target, content: "again\n", direct: true });
+    assert(second.ok && second.backup, "нет бэкапа: " + JSON.stringify(second));
+    return "direct ok";
+  });
+
   await check("unit: sandbox=false пишет напрямую", async () => {
     const { createTools } = await import(pathToFileURL(path.join(BASE, "gateway", "tools.mjs")).href);
     const dir = path.join(BASE, ".test-nosandbox");

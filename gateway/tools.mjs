@@ -302,12 +302,24 @@ export function createTools(rootDir, config = {}) {
     };
   };
 
-  const write = async ({ path: p, content, createDirs = true } = {}) => {
+  const write = async ({ path: p, content, createDirs = true, direct = false } = {}) => {
     if (!p) throw new ToolError("не указан path");
     if (typeof content !== "string") throw new ToolError("content должен быть строкой");
     if (config.allowWrite === false) throw new ToolError("запись отключена в конфиге шлюза");
     const abs = resolve(p);
-    if (sandbox) return stageWrite("write", abs, content, { source: "tool" });
+    if (sandbox && !direct) return stageWrite("write", abs, content, { source: "tool" });
+    let backup = null;
+    if (direct) {
+      // Сохранение «как в редакторе»: файл перезаписывается сразу, со старой копией.
+      try {
+        const prev = await fsp.readFile(abs);
+        const stamp = new Date().toISOString().replace(/[:.]/g, "-");
+        const backupAbs = path.join(metaDir, "backup", stamp, relOf(abs));
+        await fsp.mkdir(path.dirname(backupAbs), { recursive: true });
+        await fsp.writeFile(backupAbs, prev);
+        backup = relOf(backupAbs);
+      } catch {}
+    }
     if (createDirs) await fsp.mkdir(path.dirname(abs), { recursive: true });
     await fsp.writeFile(abs, content, "utf8");
     const st = await fsp.stat(abs);
@@ -316,6 +328,7 @@ export function createTools(rootDir, config = {}) {
       path: relOf(abs),
       bytes: st.size,
       lines: content.split(/\r?\n/).length,
+      ...(backup ? { backup } : {}),
     };
   };
 

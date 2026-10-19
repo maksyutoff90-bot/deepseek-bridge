@@ -68,6 +68,21 @@ async function roots() {
   }
 }
 
+async function pickFolder() {
+  const { port, token } = await cfg();
+  try {
+    const res = await fetch(`http://127.0.0.1:${port}/pick-folder`, {
+      method: "POST",
+      headers: { "content-type": "application/json", "x-webcode-token": token },
+      body: "{}",
+      cache: "no-store",
+    });
+    return await res.json();
+  } catch (e) {
+    return { ok: false, error: String(e && e.message ? e.message : e) };
+  }
+}
+
 async function setRoot(path) {
   const { port, token } = await cfg();
   try {
@@ -128,6 +143,10 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   }
   if (msg.type === "setRoot") {
     setRoot(msg.path).then(sendResponse);
+    return true;
+  }
+  if (msg.type === "pickFolder") {
+    pickFolder().then(sendResponse);
     return true;
   }
   if (msg.type === "exec") {

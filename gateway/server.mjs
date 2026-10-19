@@ -7,6 +7,7 @@ import fsp from "node:fs/promises";
 import path from "node:path";
 import crypto from "node:crypto";
 import { fileURLToPath } from "node:url";
+import { execFile } from "node:child_process";
 import { createTools, ToolError } from "./tools.mjs";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
@@ -123,6 +124,36 @@ const MIME = {
   ".png": "image/png",
 };
 
+function pickFolder() {
+  return new Promise((resolve) => {
+    const script = [
+      "Add-Type -AssemblyName System.Windows.Forms",
+      "$d = New-Object System.Windows.Forms.FolderBrowserDialog",
+      '$d.Description = "WebCode: выберите рабочую папку"',
+      "$d.ShowNewFolderButton = $true",
+      'if ($d.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) { $d.SelectedPath } else { "" }',
+    ].join("\r\n");
+    const file = path.join(LOG_DIR, "pick-folder.ps1");
+    try {
+      fs.writeFileSync(file, "\uFEFF" + script, "utf8");
+    } catch {
+      resolve("");
+      return;
+    }
+    execFile(
+      "powershell.exe",
+      ["-NoProfile", "-STA", "-ExecutionPolicy", "Bypass", "-File", file],
+      { timeout: 180000 },
+      (err, stdout) => {
+        try {
+          fs.unlinkSync(file);
+        } catch {}
+        resolve(err ? "" : String(stdout || "").trim());
+      }
+    );
+  });
+}
+
 async function serveMock(req, res, urlPath) {
   const rel = urlPath.replace(/^\/webcode-mock\/?/, "") || "chat.html";
   const file = path.resolve(ROOTDIR, "mock", rel);
@@ -185,6 +216,13 @@ const server = http.createServer(async (req, res) => {
     if (!safeEqual(String(token), TOKEN)) return reply(res, 401, { ok: false, error: "неверный токен" });
     const roots = [ROOT, ...KNOWN_ROOTS.filter((r) => r !== ROOT && fs.existsSync(r))];
     return reply(res, 200, { ok: true, root: ROOT, roots });
+  }
+
+  if (req.method === "POST" && url.pathname === "/pick-folder") {
+    const token = req.headers["x-webcode-token"] || "";
+    if (!safeEqual(String(token), TOKEN)) return reply(res, 401, { ok: false, error: "неверный токен" });
+    const picked = await pickFolder();
+    return reply(res, 200, { ok: true, path: picked });
   }
 
   if (req.method === "POST" && url.pathname === "/root") {

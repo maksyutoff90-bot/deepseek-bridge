@@ -37,7 +37,8 @@ file changes.
 | Local checks | **Check** → scan the project (files, sizes, extensions, TODOs) or run the tests (`run_tests.bat` / `pytest`) without the model |
 | Diff | `code --diff _fixes/... original` opens in VS Code |
 | Panel | Floating or docked to the right, resizable by dragging the left edge |
-| Projects | Click the footer (`gateway: …`) to switch the working folder: recent projects or any path via prompt |
+| Projects | **Project** button (or the footer): recent folders, native Windows folder dialog, any path |
+| File editor | Preview → ✎ → edit → 💾 saves straight into the project, old copy kept in `_fixes/.meta/backup` |
 | Languages | English by default, Russian in the settings; switches live, no reload |
 | Safety | Sandbox staging, apply confirmation, backups, “looks like a fragment” guard, token auth |
 | Robustness | Ignores chat history (including history rendered late in a background tab) and SPA chat switches |
@@ -181,7 +182,6 @@ tools/e2e.mjs   40 checks + screenshot
 * deny-list for secrets and key files
 * “Undo last apply” button
 * autopilot with a step limit and a stop button
-* multiple projects and a root switcher
 * gateway auto-start and a packaged `.crx`
 
 ## License

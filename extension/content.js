@@ -53,6 +53,7 @@
           <button class="wc-btn" id="wc-write" title="Записать код из последнего ответа в файлы">Записать</button>
           <button class="wc-btn wc-ghost" id="wc-apply" title="Перенести файлы из _fixes в проект">Применить</button>
           <button class="wc-btn wc-ghost" id="wc-folder" title="Открыть папку исправлений">Папка</button>
+          <button class="wc-btn wc-ghost" id="wc-project" title="Выбрать рабочую папку">Проект</button>
           <button class="wc-btn wc-ghost" id="wc-tree-btn" title="Файлы проекта и перетаскивание">Файлы</button>
           <button class="wc-btn wc-ghost" id="wc-check" title="Сканировать проект и запустить тесты">Проверить</button>
           <button class="wc-btn wc-ghost" id="wc-clear" title="Очистить лог">Очистить</button>
@@ -74,6 +75,8 @@
           <div class="wc-preview-head">
             <span id="wc-preview-title"></span>
             <span class="wc-spacer"></span>
+            <button class="wc-icon" id="wc-preview-edit" title="Редактировать">✎</button>
+            <button class="wc-icon" id="wc-preview-save" title="Сохранить" hidden>💾</button>
             <button class="wc-icon" id="wc-preview-open" title="Открыть в VS Code">↗</button>
             <button class="wc-icon" id="wc-preview-close" title="Закрыть">×</button>
           </div>
@@ -215,6 +218,11 @@
     e.stopPropagation();
     chooseProject();
   });
+  $("wc-project").addEventListener("click", (e) => {
+    e.stopPropagation();
+    const rect = e.currentTarget.getBoundingClientRect();
+    chooseProject(rect.left, rect.top - 6);
+  });
   $("wc-check").addEventListener("click", (e) => {
     e.stopPropagation();
     const r = e.currentTarget.getBoundingClientRect();
@@ -246,6 +254,14 @@
   $("wc-preview-open").addEventListener("click", (e) => {
     e.stopPropagation();
     if (previewPath) openInEditor(previewPath);
+  });
+  $("wc-preview-edit").addEventListener("click", (e) => {
+    e.stopPropagation();
+    if (previewPath) showEditor(previewPath);
+  });
+  $("wc-preview-save").addEventListener("click", (e) => {
+    e.stopPropagation();
+    savePreview();
   });
   $("wc-folder").addEventListener("click", (e) => {
     e.stopPropagation();
@@ -638,6 +654,7 @@
 
   // ---------------------------------------------------- контекстное меню ----
   let previewPath = "";
+  let previewText = "";
 
   function closeMenu() {
     const m = $("wc-menu");
@@ -700,6 +717,7 @@
     if (row.dataset.type === "dir") {
       showMenu(e.clientX, e.clientY, [
         { label: "Открыть папку", action: () => openFolderPath(p) },
+        { label: "Новый файл…", action: () => newFile(p) },
         { label: "Скопировать путь", action: () => copyPath(p) },
       ]);
       return;
@@ -760,14 +778,23 @@
       log(`✗ ${path}: ${(r && r.error) || "?"}`, "err");
       return;
     }
+    previewText = String(r.content || "")
+      .split(/\r?\n/)
+      .map((line) => line.replace(/^\s*\d+\| /, ""))
+      .join("\n");
     $("wc-preview-title").textContent = `${path} · ${r.lines} стр.`;
     $("wc-preview-body").textContent = r.content;
+    $("wc-preview-body").hidden = false;
+    $("wc-preview-save").hidden = true;
+    $("wc-preview-edit").hidden = false;
+    const ed = $("wc-preview-edit-area");
+    if (ed) ed.hidden = true;
     $("wc-preview").hidden = false;
     expand();
   }
 
   // Выбор рабочей папки (проекта) — как список workspace в редакторе.
-  async function chooseProject() {
+  async function chooseProject(x, y) {
     const r = await chrome.runtime.sendMessage({ type: "roots" });
     if (!r || !r.ok) {
       log(`✗ проекты: ${(r && r.error) || "?"}`, "err");
@@ -779,13 +806,24 @@
     }));
     items.push({
       label: "Другая папка…",
+      action: async () => {
+        const picked = await chrome.runtime.sendMessage({ type: "pickFolder" });
+        if (picked && picked.ok && picked.path) {
+          switchProject(picked.path);
+        } else if (picked && picked.ok === false) {
+          log(`✗ выбор папки: ${picked.error || "?"}`, "err");
+        }
+      },
+    });
+    items.push({
+      label: "Указать путь…",
       action: () => {
         const p = prompt("Папка проекта:", r.root);
         if (p && p.trim()) switchProject(p.trim());
       },
     });
     const rect = footEl.getBoundingClientRect();
-    showMenu(rect.left, rect.top - 8, items);
+    showMenu(x != null ? x : rect.left, y != null ? y : rect.top - 8, items);
   }
 
   async function switchProject(path) {
@@ -828,6 +866,59 @@
     if (r.tail) {
       for (const line of String(r.tail).split("\n").slice(-8)) log(line, r.code === 0 ? "dim" : "err");
     }
+  }
+
+  // Редактор файла: открыть, поправить и сохранить в проект (как в DSH).
+  function newFile(dir) {
+    const name = prompt("Имя файла:", "new.txt");
+    if (!name) return;
+    const p = dir && dir !== "." ? `${dir}/${name}`.replace(/\/+/g, "/") : name;
+    previewPath = p;
+    previewText = "";
+    showEditor(p);
+  }
+
+  function showEditor(path) {
+    previewPath = path;
+    $("wc-preview").hidden = false;
+    $("wc-preview-title").textContent = `${path} · редактирование`;
+    const body = $("wc-preview-body");
+    body.hidden = true;
+    let ed = $("wc-preview-edit-area");
+    if (!ed) {
+      ed = document.createElement("textarea");
+      ed.id = "wc-preview-edit-area";
+      ed.className = "wc-editor";
+      body.parentNode.insertBefore(ed, body.nextSibling);
+    }
+    ed.hidden = false;
+    ed.value = previewText || "";
+    $("wc-preview-save").hidden = false;
+    $("wc-preview-edit").hidden = true;
+    expand();
+    ed.focus();
+  }
+
+  async function savePreview() {
+    const ed = $("wc-preview-edit-area");
+    if (!ed || !previewPath) return;
+    const r = await exec("write", { path: previewPath, content: ed.value, direct: true });
+    if (!r || !r.ok) {
+      log(`✗ сохранить: ${(r && r.error) || "?"}`, "err");
+      return;
+    }
+    previewText = ed.value;
+    log(`✓ сохранено: ${r.path}${r.backup ? " (бэкап)" : ""}`, "ok");
+    const body = $("wc-preview-body");
+    body.textContent = previewText
+      .split(/\r?\n/)
+      .map((line, i) => `${i + 1}| ${line}`)
+      .join("\n");
+    body.hidden = false;
+    ed.hidden = true;
+    $("wc-preview-save").hidden = true;
+    $("wc-preview-edit").hidden = false;
+    $("wc-preview-title").textContent = `${previewPath} · ${previewText.split(/\r?\n/).length} стр.`;
   }
 
   // Отправить содержимое файла в поле ввода чата (модель сразу видит код).
