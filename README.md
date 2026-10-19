@@ -37,6 +37,7 @@ file changes.
 | Local checks | **Check** → scan the project (files, sizes, extensions, TODOs) or run the tests (`run_tests.bat` / `pytest`) without the model |
 | Diff | `code --diff _fixes/... original` opens in VS Code |
 | Panel | Floating or docked to the right, resizable by dragging the left edge |
+| Projects | Click the footer (`gateway: …`) to switch the working folder: recent projects or any path via prompt |
 | Languages | English by default, Russian in the settings; switches live, no reload |
 | Safety | Sandbox staging, apply confirmation, backups, “looks like a fragment” guard, token auth |
 | Robustness | Ignores chat history (including history rendered late in a background tab) and SPA chat switches |
