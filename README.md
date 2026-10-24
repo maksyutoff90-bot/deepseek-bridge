@@ -190,3 +190,22 @@ tools/e2e.mjs   40 checks + screenshot
 ## License
 
 MIT — see [LICENSE](LICENSE).
+
+
+## Autostart (Windows)
+
+Run once:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File install-autostart.ps1
+```
+
+It puts a shortcut to `start-gateway-hidden.vbs` into the Startup folder, so the
+gateway starts hidden at sign-in. Disable with:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File uninstall-autostart.ps1
+```
+
+The token is read from `gateway\.token` by the panel and by the VS Code extension,
+so nothing else is needed after login.
